@@ -1,0 +1,12 @@
+{
+  "appTitle": "Todo App",
+  "welcome": "Welcome to Todo App",
+  "welcomeMessage": "A modern and elegant todo list application.",
+  "nav": {
+    "todos": "Todo",
+    "settings": "Settings"
+  },
+  "loading": "Loading...",
+  "error": "Something went wrong",
+  "retry": "Try again"
+}
