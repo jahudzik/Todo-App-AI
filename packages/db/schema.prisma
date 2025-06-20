@@ -1,0 +1,38 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model TodoList {
+  id         String     @id @default(cuid())
+  name       String
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  orderIndex Int        @default(0)
+  userId     String?    @default("demo")
+  items      TodoItem[] @relation("ItemsOnList")
+
+  @@unique([userId, orderIndex])
+}
+
+model TodoItem {
+  id             String   @id @default(cuid())
+  listId         String
+  title          String
+  isCompleted    Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  positionInList Int      @default(0)
+
+  list TodoList @relation("ItemsOnList", fields: [listId], references: [id], onDelete: Cascade)
+
+  @@unique([listId, positionInList])
+}
