@@ -33,8 +33,8 @@ model TodoList {
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   orderIndex   Int        @default(0)
-  userId       String?
-  items        TodoItem[] @relation("ItemsOnList", cascadeOnDelete: true)
+  userId       String?    @default("demo")
+  items        TodoItem[] @relation("ItemsOnList")
 
   @@unique([userId, orderIndex])
 }
@@ -48,7 +48,7 @@ model TodoItem {
   updatedAt       DateTime @updatedAt
   positionInList  Int      @default(0)
 
-  list            TodoList @relation("ItemsOnList", fields: [listId], references: [id])
+  list            TodoList @relation("ItemsOnList", fields: [listId], references: [id], onDelete: Cascade)
 
   @@unique([listId, positionInList])
 }
