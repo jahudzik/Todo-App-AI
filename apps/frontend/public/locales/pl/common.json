@@ -6,6 +6,16 @@
     "todos": "Zadania",
     "settings": "Ustawienia"
   },
+  "settings": {
+    "title": "Ustawienia",
+    "language": {
+      "title": "Język",
+      "description": "Wybierz preferowany język",
+      "english": "Angielski",
+      "polish": "Polski",
+      "current": "Bieżący język: {{language}}"
+    }
+  },
   "loading": "Ładowanie...",
   "error": "Coś poszło nie tak",
   "retry": "Spróbuj ponownie"

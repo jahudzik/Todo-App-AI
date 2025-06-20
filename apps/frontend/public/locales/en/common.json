@@ -6,6 +6,16 @@
     "todos": "Todo",
     "settings": "Settings"
   },
+  "settings": {
+    "title": "Settings",
+    "language": {
+      "title": "Language",
+      "description": "Select your preferred language",
+      "english": "English",
+      "polish": "Polish",
+      "current": "Current language: {{language}}"
+    }
+  },
   "loading": "Loading...",
   "error": "Something went wrong",
   "retry": "Try again"
