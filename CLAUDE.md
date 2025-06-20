@@ -40,20 +40,6 @@ Two main entities with specific constraints:
 
 ## Development Workflow
 
-## Environment Setup
-
-Before running the application, configure environment variables:
-
-```bash
-# Copy the example environment file
-cp .env.example .env
-
-# Edit .env with your configuration:
-# - DATABASE_URL: PostgreSQL connection string
-# - PORT: Backend server port (default: 3001)
-# - NEXT_PUBLIC_API_URL: Frontend API endpoint
-```
-
 ## Development Commands
 
 ```bash

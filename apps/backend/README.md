@@ -9,6 +9,26 @@ Express.js backend API for the Todo App.
 - **Runtime**: Node.js
 - **Development**: tsx for hot reloading
 
+## Environment Setup
+
+Before running the backend, configure environment variables:
+
+```bash
+# Copy the example environment file (from project root)
+cp ../../.env.example ../../.env
+
+# Edit .env with your configuration:
+# - DATABASE_URL: PostgreSQL connection string
+#   Example: "postgresql://username:password@localhost:5432/todo_app_db"
+# - PORT: Backend server port (default: 3001)
+# - NODE_ENV: Environment mode (development/production)
+```
+
+Required environment variables:
+- **DATABASE_URL**: PostgreSQL database connection string
+- **PORT**: Port number for the Express server (defaults to 3001)
+- **NODE_ENV**: Environment mode for logging and optimization
+
 ## Development
 
 ```bash
