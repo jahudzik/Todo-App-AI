@@ -1,0 +1,12 @@
+{
+  "appTitle": "Aplikacja Todo",
+  "welcome": "Witaj w Aplikacji Todo",
+  "welcomeMessage": "Nowoczesna i elegancka aplikacja do zarządzania zadaniami.",
+  "nav": {
+    "todos": "Zadania",
+    "settings": "Ustawienia"
+  },
+  "loading": "Ładowanie...",
+  "error": "Coś poszło nie tak",
+  "retry": "Spróbuj ponownie"
+}
