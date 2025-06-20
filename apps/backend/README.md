@@ -14,8 +14,8 @@ Express.js backend API for the Todo App.
 Before running the backend, configure environment variables:
 
 ```bash
-# Copy the example environment file (from project root)
-cp ../../.env.example ../../.env
+# Copy the example environment file to backend directory
+cp ../../.env.example .env
 
 # Edit .env with your configuration:
 # - DATABASE_URL: PostgreSQL connection string
