@@ -17,7 +17,7 @@ model TodoList {
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
   orderIndex Int        @default(0)
-  userId     String?    @default("demo")
+  userId     String     @default("demo")
   items      TodoItem[] @relation("ItemsOnList")
 
   @@unique([userId, orderIndex])
