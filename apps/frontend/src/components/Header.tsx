@@ -33,9 +33,9 @@ export default function Header({ onMenuClick }: HeaderProps) {
 
         {/* Logo/Title */}
         <div className="flex items-center">
-          <h1 className="text-xl font-semibold text-gray-900 lg:ml-64">
+          <span className="text-xl font-semibold text-gray-900 lg:ml-64">
             {t('appTitle')}
-          </h1>
+          </span>
         </div>
 
         {/* Right side placeholder */}
