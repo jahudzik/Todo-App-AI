@@ -40,27 +40,31 @@ Two main entities with specific constraints:
 
 ## Development Workflow
 
-Since this appears to be a new project with only specification files, the typical development commands would be:
+## Development Commands
 
 ```bash
-# Install dependencies
+# Install dependencies for all workspaces
 pnpm install
 
-# Start development servers
-pnpm dev  # or equivalent for the monorepo setup
+# Start all development servers
+pnpm dev
 
-# Build for production
+# Build all workspaces for production
 pnpm build
 
-# Run tests
-pnpm test
-
-# Lint code
+# Run linting across all workspaces
 pnpm lint
 
-# Database operations
-pnpm db:migrate
-pnpm db:seed
+# Run type checking across all workspaces
+pnpm type-check
+
+# Database operations (run from packages/db)
+cd packages/db
+pnpm db:generate    # Generate Prisma client
+pnpm db:push        # Push schema to database
+pnpm db:migrate     # Create and run migrations
+pnpm db:seed        # Seed with demo data
+pnpm db:studio      # Open Prisma Studio
 ```
 
 ## Important Implementation Notes
