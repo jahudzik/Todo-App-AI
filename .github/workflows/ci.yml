@@ -40,9 +40,10 @@ jobs:
         run: pnpm install
         
       - name: Setup database and generate Prisma client
+        working-directory: packages/db
         run: |
-          pnpm --filter db db:generate
-          pnpm --filter db db:push
+          pnpm db:generate
+          pnpm db:push
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/todoapp_test
           
