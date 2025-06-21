@@ -62,6 +62,9 @@ pnpm lint
 # Run type checking across all workspaces
 pnpm type-check
 
+# Run unit tests across all workspaces
+pnpm test
+
 # Database operations (run from packages/db)
 cd packages/db
 pnpm db:generate    # Generate Prisma client
@@ -124,6 +127,15 @@ PORT=3001  # optional, defaults to 3001
 - Mobile: iOS Safari 14+, Chrome Mobile 90+
 - No Internet Explorer support
 - ES2020+ features used without polyfills
+
+## Testing Requirements
+
+- **MANDATORY:** All new business logic must include comprehensive unit tests
+- **Test Coverage:** Aim for 80%+ code coverage on new functions and modules
+- **Testing Framework:** Jest with TypeScript support for backend, Vitest for frontend
+- **Test Types:** Unit tests for utilities/business logic, integration tests for API endpoints
+- **Critical Areas:** Gap indexing, validation logic, error handling, database operations
+- **Test First:** When implementing complex logic, write tests alongside or before implementation
 
 ## Additional notes
 

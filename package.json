@@ -12,6 +12,7 @@
     "build": "pnpm --recursive build",
     "lint": "pnpm --recursive lint",
     "type-check": "pnpm --recursive type-check",
+    "test": "pnpm --recursive test",
     "clean": "pnpm --recursive clean"
   },
   "devDependencies": {
