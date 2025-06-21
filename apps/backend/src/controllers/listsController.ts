@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { Prisma } from '@db';
 import { db } from '../utils/database';
 import { logger } from '../utils/logger';
 import { createError } from '../middleware/errorHandler';
@@ -65,13 +66,28 @@ export async function getAllLists(req: Request, res: Response): Promise<void> {
   } catch (error) {
     logger.error('Error fetching lists:', error);
     
-    // Check if it's a database connection error
-    if (error instanceof Error && error.message.includes('connect')) {
+    // Check for specific Prisma connection errors
+    if (error instanceof Prisma.PrismaClientInitializationError) {
+      // Database connection/initialization errors
       throw createError(
         'Unable to connect to database. Please check your DATABASE_URL configuration.',
         503,
         'DATABASE_CONNECTION_ERROR'
       );
+    }
+    
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      // Check for specific connection-related error codes
+      // P1001: Can't reach database server
+      // P1008: Operations timed out
+      // P1017: Server has closed the connection
+      if (error.code === 'P1001' || error.code === 'P1008' || error.code === 'P1017') {
+        throw createError(
+          'Database connection failed. Please verify database is accessible.',
+          503,
+          'DATABASE_CONNECTION_ERROR'
+        );
+      }
     }
     
     // Re-throw other errors to be handled by global error handler
