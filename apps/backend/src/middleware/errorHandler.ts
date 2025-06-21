@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { logger } from '../utils/logger';
+import { ErrorResponse } from '../types';
 
 /**
  * Custom error class for application-specific errors
@@ -20,14 +21,6 @@ export class AppError extends Error {
   }
 }
 
-/**
- * Error response interface
- */
-interface ErrorResponse {
-  error: string;
-  message: string;
-  details?: any;
-}
 
 /**
  * Global error handling middleware
@@ -82,6 +75,7 @@ export function errorHandler(
 
   // Create error response
   const errorResponse: ErrorResponse = {
+    success: false,
     error: errorCode,
     message,
   };

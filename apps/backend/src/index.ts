@@ -13,8 +13,7 @@ dotenv.config();
 // Validate required environment variables
 if (!process.env.DATABASE_URL) {
   console.error('❌ DATABASE_URL environment variable is required');
-  console.error('Please create a .env file in the backend directory with:');
-  console.error('DATABASE_URL=postgresql://username:password@localhost:5432/todoapp');
+  console.error('Please create a .env file in the backend directory with your database connection string');
   process.exit(1);
 }
 
@@ -34,13 +33,25 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Request logging middleware
+// Request logging middleware with sensitive data filtering
 app.use((req, res, next) => {
+  // Filter out sensitive query parameters
+  const sensitiveParams = ['password', 'token', 'api_key', 'apikey', 'secret', 'auth'];
+  const filteredQuery = Object.keys(req.query).reduce((acc, key) => {
+    if (sensitiveParams.some(param => key.toLowerCase().includes(param))) {
+      acc[key] = '[REDACTED]';
+    } else {
+      acc[key] = req.query[key];
+    }
+    return acc;
+  }, {} as Record<string, any>);
+
   logger.info(`${req.method} ${req.path}`, {
     method: req.method,
     path: req.path,
-    query: req.query,
+    query: filteredQuery,
     userAgent: req.get('User-Agent'),
+    ip: req.ip,
   });
   next();
 });

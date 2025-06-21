@@ -2,19 +2,29 @@
  * Common types used across the Todo App backend
  */
 
-export interface ApiResponse<T = any> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  message?: string;
-  meta?: {
-    total: number;
-    page?: number;
-    limit?: number;
-    totalPages?: number;
-    [key: string]: any;
-  };
-}
+/**
+ * Discriminated union for API responses - ensures type safety
+ * between success and error responses
+ */
+export type ApiResponse<T = any> = 
+  | {
+      success: true;
+      data: T;
+      message?: string;
+      meta?: {
+        total: number;
+        page?: number;
+        limit?: number;
+        totalPages?: number;
+        [key: string]: any;
+      };
+    }
+  | {
+      success: false;
+      error: string;
+      message: string;
+      details?: any;
+    };
 
 export interface ErrorResponse {
   success: false;

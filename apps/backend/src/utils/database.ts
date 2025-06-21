@@ -55,9 +55,33 @@ export async function disconnectDatabase(): Promise<void> {
   }
 }
 
-// Handle process termination gracefully
+// Handle process termination gracefully for all scenarios
 process.on('beforeExit', async () => {
   await disconnectDatabase();
+});
+
+process.on('SIGINT', async () => {
+  logger.info('Received SIGINT, closing database connection...');
+  await disconnectDatabase();
+  process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+  logger.info('Received SIGTERM, closing database connection...');
+  await disconnectDatabase();
+  process.exit(0);
+});
+
+process.on('uncaughtException', async (error) => {
+  logger.error('Uncaught exception, closing database connection:', error);
+  await disconnectDatabase();
+  process.exit(1);
+});
+
+process.on('unhandledRejection', async (reason) => {
+  logger.error('Unhandled rejection, closing database connection:', reason);
+  await disconnectDatabase();
+  process.exit(1);
 });
 
 export { prisma as db };
