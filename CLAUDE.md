@@ -86,8 +86,24 @@ pnpm db:studio      # Open Prisma Studio
 
 ## Git Commit Guidelines
 
-- Do not mention Claude or AI tools in commit messages
+- **NEVER mention Claude, AI tools, or AI assistance in commit messages**
 - Keep commit messages professional and focused on the technical changes
+- Use conventional commit format when appropriate
+
+## Pull Request Workflow
+
+- **ALWAYS create new feature branches** for pull requests (never commit directly to develop)
+- **ALWAYS target develop branch** as the base for pull requests (never target main)
+- Feature branch naming: `feature/descriptive-name` or `fix/issue-description`
+- Example workflow:
+  ```bash
+  git checkout develop
+  git pull origin develop
+  git checkout -b feature/new-feature-name
+  # make changes and commits
+  git push -u origin feature/new-feature-name
+  gh pr create --base develop --title "..." --body "..."
+  ```
 
 ## Environment Variables
 
