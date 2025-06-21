@@ -16,9 +16,9 @@ A simple, elegant, and modern web-based todo list application operating in a cli
 - **Database**: PostgreSQL (e.g., Supabase)
 - **Hosting**: Vercel (frontend/backend), Supabase (database)
 - **Translations**: next-i18next with JSON files; default language detected from browser with option to manually switch in settings
-- **Date/Time Formatting**: Use `Intl.DateTimeFormat` with language from i18n settings
-  - Relative dates for recent items ("2 hours ago" / "2 godziny temu")
-  - Absolute dates for older items (localized format: MM/DD/YYYY for EN, DD/MM/YYYY for PL)
+- **Date/Time Formatting**: Use appropriate Intl APIs with language from i18n settings
+  - Relative dates for recent items using `Intl.RelativeTimeFormat` ("2 hours ago" / "2 godziny temu")
+  - Absolute dates for older items using `Intl.DateTimeFormat` (localized format: MM/DD/YYYY for EN, DD/MM/YYYY for PL)
   - Display creation dates in list cards and item metadata
 - **State Management**: TanStack Query (React Query) with optimistic UI or refetch
 - **Authentication**: not in MVP; all data belongs to a single shared demo user (`userId = 'demo'`)
