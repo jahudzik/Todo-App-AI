@@ -95,8 +95,15 @@ pnpm db:studio      # Open Prisma Studio
 
 ## Pull Request Workflow
 
+- **CRITICAL: NEVER commit directly to develop or main branches**
 - **ALWAYS create new feature branches** for pull requests (never commit directly to develop)
 - **ALWAYS target develop branch** as the base for pull requests (never target main)
+- **MANDATORY workflow for ALL changes:**
+  1. Start from up-to-date develop: `git checkout develop && git pull origin develop`
+  2. Create feature branch: `git checkout -b feature/descriptive-name`
+  3. Make changes and commits on the feature branch
+  4. Push feature branch: `git push -u origin feature/branch-name`
+  5. Create PR: `gh pr create --base develop`
 - Feature branch naming: `feature/descriptive-name` or `fix/issue-description`
 - Example workflow:
   ```bash
