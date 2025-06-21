@@ -31,7 +31,7 @@ In the `apps/backend` folder, initialize an Express.js server using TypeScript. 
 
 3. **Initial Endpoints:**
    - `GET /ping` - health check endpoint
-   - `GET /lists` - fetch all lists for userId='demo' where `isDeleted = false` with nested non-deleted items
+   - `GET /lists` - fetch all lists for userId='demo' with nested items
    - Basic error handling and logging
 
 4. **Development Setup:**
@@ -46,9 +46,9 @@ In the `apps/backend` folder, initialize an Express.js server using TypeScript. 
 Create complete CRUD operations for todo lists in the backend:
 
 1. **List Management Endpoints:**
-   - `GET /lists` - fetch all lists for user 'demo' where `isDeleted = false` (with nested non-deleted items) ordered by orderIndex DESC
+   - `GET /lists` - fetch all lists for user 'demo' (with nested items) ordered by orderIndex DESC
    - `POST /lists` - create a new list with default name "New List" and highest orderIndex using gap indexing
-   - `PATCH /lists/:id` - update list name (validate non-empty, return 400 if empty, only for non-deleted lists)
+   - `PATCH /lists/:id` - update list name (validate non-empty, return 400 if empty)
    - `DELETE /lists/:id` - permanently delete the list and all its items (immediate cascade delete via Prisma)
    - No undo functionality for list deletion (items are also permanently removed)
 
@@ -62,12 +62,12 @@ Create complete CRUD operations for todo lists in the backend:
 
 3. **Delete Behavior:**
    - **Lists**: Immediate permanent deletion using `prisma.todoList.delete()` - automatically cascades to items
-   - **Items**: Soft delete with undo functionality (see Item endpoints for details)
-   - No soft delete logic needed for lists - they are permanently removed with all items
-   - Background cleanup job only applies to soft-deleted items, not lists
+   - **Items**: Immediate permanent deletion using `prisma.todoItem.delete()`
+   - All deletions are terminal - no soft delete or undo functionality
+   - No background cleanup jobs needed
 
 4. **Error Handling and Validation:**
-   - Proper HTTP status codes (200, 201, 400, 404, 410, 500)
+   - Proper HTTP status codes (200, 201, 400, 404, 500)
    - Standard JSON error response format:
      ```json
      {
@@ -90,16 +90,11 @@ Create complete CRUD operations for todo lists in the backend:
 Create complete CRUD operations for todo items within lists:
 
 1. **Item Management Endpoints:**
-   - `GET /items?listId=:listId` - fetch items for a specific list where `isDeleted = false`, sorted by completion status and positionInList
+   - `GET /items?listId=:listId` - fetch items for a specific list, sorted by completion status and positionInList
    - `POST /items` - create new item with title, listId, and calculated positionInList using gap indexing
-   - `PATCH /items/:id` - update item title, completion status, or position (only for non-deleted items)
-   - `DELETE /items/:id` - soft-delete item with undo support (set `isDeleted = true, deletedAt = now()`)
-   - `POST /items/:id/toggle` - toggle completion status instantly (only for non-deleted items)
-   - `POST /undo-delete/:id` - restore soft-deleted item using original item ID
-     - Check if `deletedAt` is within 5-second window
-     - Return 410 Gone with `UNDO_EXPIRED` error if window expired
-     - Return 404 with `NOT_FOUND` error if item not found or not deleted
-     - On success: set `isDeleted = false, deletedAt = null` and return 200
+   - `PATCH /items/:id` - update item title, completion status, or position
+   - `DELETE /items/:id` - permanently delete item using `prisma.todoItem.delete()`
+   - `POST /items/:id/toggle` - toggle completion status instantly
 
 2. **Advanced Item Operations:**
    - `PATCH /items/:id/move` - update positionInList for drag-and-drop reordering
@@ -118,7 +113,7 @@ Create complete CRUD operations for todo items within lists:
    - Ensure listId exists before creating items
    - Prevent orphaned items when lists are deleted (cascade handled by Prisma)
    - Return 400 Bad Request using standard error format for validation failures
-   - Error codes: `VALIDATION_ERROR`, `NOT_FOUND`, `UNDO_EXPIRED`, `INTERNAL_ERROR`
+   - Error codes: `VALIDATION_ERROR`, `NOT_FOUND`, `INTERNAL_ERROR`
    - XSS protection for all text inputs
 
 ```
@@ -147,7 +142,7 @@ Set up the data fetching layer for the frontend:
    - `useListQuery(id)` - fetch single list with items
    - `useCreateListMutation()` - create new list with optimistic updates
    - `useUpdateListMutation()` - update list name with validation
-   - `useDeleteListMutation()` - delete with undo functionality
+   - `useDeleteListMutation()` - permanent deletion
 
 4. **Error Handling and Loading States:**
    - Global error boundary for unhandled errors
@@ -159,7 +154,7 @@ Set up the data fetching layer for the frontend:
      - Show cached TanStack Query data when offline
      - Block user actions with "Please check your connection" message
      - Auto-retry and re-enable actions when connection restored
-   - Handle specific error codes (VALIDATION_ERROR, NOT_FOUND, UNDO_EXPIRED)
+   - Handle specific error codes (VALIDATION_ERROR, NOT_FOUND, INTERNAL_ERROR)
 
 ```
 
@@ -264,7 +259,7 @@ Implement the individual list detail page:
    - Skeleton loading for list and items
    - Error boundary for list not found
    - Empty list state: "No tasks yet. Add your first task above."
-   - All completed state: Show completed section with "Clear completed" option
+   - All completed state: Show completed section only
    - Retry mechanisms for failed data fetching
    - Graceful degradation for slow connections
 
@@ -309,13 +304,11 @@ Create comprehensive todo item management within lists:
 ```text
 Add comprehensive item management actions:
 
-1. **Item Deletion with Undo:**
-   - Delete button with optional confirmation
-   - Soft delete with 5-second undo window
-   - Toast notification with undo button (disabled after 5 seconds)
+1. **Item Deletion (Permanent):**
+   - Delete button without confirmation required
+   - Immediate permanent deletion
    - Optimistic removal from UI
-   - Restore functionality if undo is triggered within window
-   - Handle 410 Gone response gracefully (show "Undo window expired" message)
+   - Proper error handling if deletion fails
 
 2. **Item Actions Menu:**
    - Right-click context menu or dedicated actions button

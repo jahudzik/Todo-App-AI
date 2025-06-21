@@ -23,11 +23,11 @@ The project is organized as a pnpm monorepo:
 ## Data Model
 
 Two main entities with specific constraints:
-- `TodoList` with `orderIndex` for sorting (unique per user) and soft delete fields (`isDeleted`, `deletedAt`)
-- `TodoItem` with `positionInList` for sorting within lists (unique per list) and soft delete fields
-- **Soft deletion behavior:**
-  - Items only: 5-second undo functionality with background cleanup
-  - Lists: Immediate permanent deletion (cascade to all items)
+- `TodoList` with `orderIndex` for sorting (unique per user)
+- `TodoItem` with `positionInList` for sorting within lists (unique per list)
+- **Deletion behavior:**
+  - Items: Immediate permanent deletion (no confirmation required)
+  - Lists: Immediate permanent deletion with confirmation dialog (cascade to all items)
 - **Gap indexing:** 1000-unit gaps with midpoint calculation and compaction when gaps < 10
 - **Validation:** List names 1-100 chars, item titles 1-500 chars, HTML sanitized
 
@@ -37,7 +37,7 @@ Two main entities with specific constraints:
 - Tasks sorted by completion status, then position
 - Inline editing with validation (empty values rejected, character limits enforced)
 - Optimistic UI with rollback on API failures
-- Undo deletion with toast notifications (items only, 5-second window)
+- Permanent deletion (items: no confirmation, lists: confirmation dialog)
 - Mobile-responsive design with hamburger menu and long-press drag initiation
 - Language switching (EN/PL) in settings with localized date formatting
 - Offline handling: cached data display with "Connection lost" banner
@@ -75,10 +75,10 @@ pnpm db:studio      # Open Prisma Studio
 
 - **Gap indexing:** Use 1000-unit gaps for `orderIndex` and `positionInList`, with midpoint calculation for insertions
 - **Validation:** All text inputs must validate length limits and reject empty values with revert on failure
-- **Error handling:** Use standardized JSON error format with specific codes (VALIDATION_ERROR, NOT_FOUND, UNDO_EXPIRED)
-- **Soft delete:** Only for TodoItems (5-second undo), TodoLists use immediate cascade deletion
+- **Error handling:** Use standardized JSON error format with specific codes (VALIDATION_ERROR, NOT_FOUND, INTERNAL_ERROR)
+- **Deletion:** All deletions are permanent - no soft delete or undo functionality
 - **Mobile drag-and-drop:** Long-press (500ms) to initiate, auto-scroll near screen edges
-- **API responses:** Proper HTTP status codes (200, 201, 400, 404, 410, 500) with descriptive messages
+- **API responses:** Proper HTTP status codes (200, 201, 400, 404, 500) with descriptive messages
 - **Offline behavior:** Show cached data, block actions, display connection banner
 - Drag-and-drop between completed/incomplete sections automatically toggles `isCompleted`
 - The UI should be generated via AI prompts and not manually modified after creation

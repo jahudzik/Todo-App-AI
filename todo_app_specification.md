@@ -38,8 +38,6 @@ model TodoList {
   updatedAt    DateTime   @updatedAt
   orderIndex   Int        @default(0)
   userId       String     @default("demo")
-  isDeleted    Boolean    @default(false)
-  deletedAt    DateTime?
   items        TodoItem[] @relation("ItemsOnList")
 
   @@unique([userId, orderIndex])
@@ -53,8 +51,6 @@ model TodoItem {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   positionInList  Int      @default(0)
-  isDeleted       Boolean  @default(false)
-  deletedAt       DateTime?
 
   list            TodoList @relation("ItemsOnList", fields: [listId], references: [id], onDelete: Cascade)
 
@@ -67,11 +63,8 @@ Notes:
 - `TodoItem.title` validation: 1-500 characters, non-empty, HTML sanitized
 - Empty names/titles rejected with validation and UI fallback to previous value
 - `userId` defaults to `'demo'` in MVP
-- Soft delete fields: `isDeleted` (Boolean, default false) and `deletedAt` (DateTime, nullable)
-  - **Items only**: Soft delete used for TodoItem with undo functionality
-  - **Lists**: Soft delete fields present but not used (immediate cascade delete applied)
-- Unique constraints ensure stable sorting: no duplicate `orderIndex` or `positionInList` per user/list (excluding soft-deleted items)
-- Default item queries exclude soft-deleted items using `WHERE isDeleted = false`
+- All deletions are permanent (no soft delete or undo functionality)
+- Unique constraints ensure stable sorting: no duplicate `orderIndex` or `positionInList` per user/list
 
 #### Application Behavior
 
@@ -91,18 +84,13 @@ Notes:
   - Reordering: same midpoint/compaction logic as lists
 - Editing allowed for list names and task titles
 - Deleting behavior:
-  - **Todo Items**: Soft delete with 5-second undo functionality
-    - Backend marks items as deleted (`isDeleted = true`, `deletedAt = now()`)
-    - Items excluded from normal queries but can be restored via `POST /undo-delete/:id` (using original item ID)
-    - Background cleanup job permanently removes items after timeout expires
-    - Show undo toast notification for 5 seconds
-    - Undo endpoint returns 410 Gone if 5-second window has expired
-    - Frontend handles timeout client-side (disable undo button after 5s)
-  - **Todo Lists**: Immediate cascade delete (no undo)
+  - **Todo Items**: Immediate permanent deletion (no confirmation required)
+    - Items are permanently removed immediately
+    - No undo functionality
+  - **Todo Lists**: Immediate permanent deletion with confirmation
+    - Show confirmation dialog: "Are you sure? This will permanently delete the list and all its tasks."
     - Permanently removes list and all its items immediately
     - Uses Prisma's `onDelete: Cascade` for automatic cleanup
-    - Show confirmation dialog before deletion
-    - No soft delete fields used for lists (kept for future features)
 - Task completion toggling saves instantly
 - Changes are saved onChange / onBlur / Enter:
   - Empty inputs revert to previous value with a toast notification
@@ -129,7 +117,7 @@ Notes:
 - **Empty States:**
   - No lists: Welcome/empty state illustration with CTA to add first list
   - Empty list: "No tasks yet. Add your first task above." with subtle illustration
-  - All items completed: Show completed section with "Clear completed" option
+  - All items completed: Show completed section only
   - Network offline: Show cached data with "Connection lost" banner at top
 - Settings screen allows language switching (en/pl) only
 - All views fully mobile-responsive
@@ -150,8 +138,7 @@ Notes:
 ### Error Handling
 
 - **Backend**: proper HTTP status codes with descriptive messages
-  - 410 Gone: Undo window expired for soft-deleted items
-  - 404 Not Found: Item not found or not in deleted state
+  - 404 Not Found: Item or list not found
   - **Standard Error Response Format:**
     ```json
     {
@@ -162,7 +149,7 @@ Notes:
       }
     }
     ```
-  - Common error codes: `VALIDATION_ERROR`, `NOT_FOUND`, `UNDO_EXPIRED`, `INTERNAL_ERROR`
+  - Common error codes: `VALIDATION_ERROR`, `NOT_FOUND`, `INTERNAL_ERROR`
 - **Input Validation**: 
   - List names: 1-100 characters, required
   - Item titles: 1-500 characters, required
