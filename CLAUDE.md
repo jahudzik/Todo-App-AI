@@ -25,18 +25,22 @@ The project is organized as a pnpm monorepo:
 Two main entities with specific constraints:
 - `TodoList` with `orderIndex` for sorting (unique per user)
 - `TodoItem` with `positionInList` for sorting within lists (unique per list)
-- Soft deletion with undo functionality (5-second timeout)
-- Gap indexing used for stable sorting when reordering
+- **Deletion behavior:**
+  - Items: Immediate permanent deletion (no confirmation required)
+  - Lists: Immediate permanent deletion with confirmation dialog (cascade to all items)
+- **Gap indexing:** 1000-unit gaps with midpoint calculation and compaction when gaps < 10
+- **Validation:** List names 1-100 chars, item titles 1-500 chars, HTML sanitized
 
 ## Key Features
 
 - Multiple todo lists per user with drag-and-drop reordering
 - Tasks sorted by completion status, then position
-- Inline editing with validation (empty values rejected)
+- Inline editing with validation (empty values rejected, character limits enforced)
 - Optimistic UI with rollback on API failures
-- Undo deletion with toast notifications
-- Mobile-responsive design with hamburger menu
-- Language switching (EN/PL) in settings
+- Permanent deletion (items: no confirmation, lists: confirmation dialog)
+- Mobile-responsive design with hamburger menu and long-press drag initiation
+- Language switching (EN/PL) in settings with localized date formatting
+- Offline handling: cached data display with "Connection lost" banner
 
 ## Development Workflow
 
@@ -69,17 +73,57 @@ pnpm db:studio      # Open Prisma Studio
 
 ## Important Implementation Notes
 
-- Use gap indexing for `orderIndex` and `positionInList` to avoid conflicts during reordering
-- All text inputs must validate against empty values and revert on failure
-- API errors should show user-friendly toast messages and restore previous state
+- **Gap indexing:** Use 1000-unit gaps for `orderIndex` and `positionInList`, with midpoint calculation for insertions
+- **Validation:** All text inputs must validate length limits and reject empty values with revert on failure
+- **Error handling:** Use standardized JSON error format with specific codes (VALIDATION_ERROR, NOT_FOUND, INTERNAL_ERROR)
+- **Deletion:** All deletions are permanent - no soft delete or undo functionality
+- **Mobile drag-and-drop:** Long-press (500ms) to initiate, auto-scroll near screen edges
+- **API responses:** Proper HTTP status codes (200, 201, 400, 404, 500) with descriptive messages
+- **Offline behavior:** Show cached data, block actions, display connection banner
 - Drag-and-drop between completed/incomplete sections automatically toggles `isCompleted`
 - The UI should be generated via AI prompts and not manually modified after creation
 - Mobile-first responsive design is critical for UX
 
 ## Git Commit Guidelines
 
-- Do not mention Claude or AI tools in commit messages
+- **NEVER mention Claude, AI tools, or AI assistance in commit messages**
 - Keep commit messages professional and focused on the technical changes
+- Use conventional commit format when appropriate
+
+## Pull Request Workflow
+
+- **ALWAYS create new feature branches** for pull requests (never commit directly to develop)
+- **ALWAYS target develop branch** as the base for pull requests (never target main)
+- Feature branch naming: `feature/descriptive-name` or `fix/issue-description`
+- Example workflow:
+  ```bash
+  git checkout develop
+  git pull origin develop
+  git checkout -b feature/new-feature-name
+  # make changes and commits
+  git push -u origin feature/new-feature-name
+  gh pr create --base develop --title "..." --body "..."
+  ```
+
+## Environment Variables
+
+**Frontend (.env.local):**
+```bash
+NEXT_PUBLIC_API_URL=http://localhost:3001
+```
+
+**Backend (.env):**
+```bash
+DATABASE_URL=postgresql://username:password@localhost:5432/todoapp
+PORT=3001  # optional, defaults to 3001
+```
+
+## Browser Support
+
+- Modern browsers only: Chrome 90+, Firefox 88+, Safari 14+, Edge 90+
+- Mobile: iOS Safari 14+, Chrome Mobile 90+
+- No Internet Explorer support
+- ES2020+ features used without polyfills
 
 ## Additional notes
 
