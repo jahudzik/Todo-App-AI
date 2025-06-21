@@ -1,175 +1,577 @@
 # TODO App Code Generation Prompts
 
-## Iteration 1: Project Setup
+## ✅ Completed Setup Phase
+The following have been implemented:
+- ✅ Monorepo with pnpm workspaces (apps/frontend, apps/backend, packages/db)
+- ✅ Next.js frontend with TypeScript and Tailwind CSS
+- ✅ Responsive layout with header and sidebar navigation
+- ✅ next-i18next configuration with EN/PL languages and manual switching
+- ✅ Prisma schema with TodoList and TodoItem models
+- ✅ Basic project structure and development tooling
 
-### Prompt 1: Initialize Monorepo
+## Iteration 1: Backend API Implementation
+
+### Prompt 1: Setup Backend with Express
 ```text
-Create a monorepo using pnpm workspaces with the following structure:
-- `apps/frontend` for the Next.js frontend
-- `apps/backend` for the Express.js backend
-- `packages/db` for shared Prisma database schema
+In the `apps/backend` folder, initialize an Express.js server using TypeScript. Set up the following:
 
-Set up `typescript`, `eslint`, and `prettier` in each workspace. Add a basic `README.md` to each folder. Configure `tsconfig.json` and workspace references for shared types and prisma client.
+1. **Basic Server Setup:**
+   - Express server with TypeScript
+   - Environment configuration with dotenv
+   - CORS middleware for frontend communication
+   - JSON body parser middleware
+   - Error handling middleware
+
+2. **Database Integration:**
+   - Connect Prisma Client (@db package)
+   - Create database connection utilities
+   - Set up environment variables for DATABASE_URL
+   - Handle missing DATABASE_URL with clear error message
+   - Optional PORT environment variable (default: 3001)
+
+3. **Initial Endpoints:**
+   - `GET /ping` - health check endpoint
+   - `GET /lists` - fetch all lists for userId='demo' where `isDeleted = false` with nested non-deleted items
+   - Basic error handling and logging
+
+4. **Development Setup:**
+   - Configure tsx for hot reloading
+   - Set up proper TypeScript paths for @db imports
+   - Create start scripts for development and production
 
 ```
 
-### Prompt 2: Setup Frontend (Next.js + Tailwind)
+### Prompt 2: Implement Todo List API Endpoints
 ```text
-In the `apps/frontend` folder, set up a Next.js project with TypeScript. Configure Tailwind CSS and remove all demo files. Use the `pages/` directory for routing (do not use the App Router). Create a base layout with a header and placeholder sidebar.
+Create complete CRUD operations for todo lists in the backend:
+
+1. **List Management Endpoints:**
+   - `GET /lists` - fetch all lists for user 'demo' where `isDeleted = false` (with nested non-deleted items) ordered by orderIndex DESC
+   - `POST /lists` - create a new list with default name "New List" and highest orderIndex using gap indexing
+   - `PATCH /lists/:id` - update list name (validate non-empty, return 400 if empty, only for non-deleted lists)
+   - `DELETE /lists/:id` - permanently delete the list and all its items (immediate cascade delete via Prisma)
+   - No undo functionality for list deletion (items are also permanently removed)
+
+2. **Gap Indexing Logic:**
+   - Implement gap indexing for orderIndex using 1000 as standard gap size
+   - New items: `orderIndex = max(orderIndex) + 1000` (or 1000 if no items exist)
+   - Insert between items: `orderIndex = Math.floor((prev.orderIndex + next.orderIndex) / 2)`
+   - Insert before first: `orderIndex = first.orderIndex - 500`
+   - Gap compaction: when calculated gap < 10, reindex all items with 1000 intervals
+   - Helper function to calculate next available position for any insertion scenario
+
+3. **Delete Behavior:**
+   - **Lists**: Immediate permanent deletion using `prisma.todoList.delete()` - automatically cascades to items
+   - **Items**: Soft delete with undo functionality (see Item endpoints for details)
+   - No soft delete logic needed for lists - they are permanently removed with all items
+   - Background cleanup job only applies to soft-deleted items, not lists
+
+4. **Error Handling and Validation:**
+   - Proper HTTP status codes (200, 201, 400, 404, 410, 500)
+   - Standard JSON error response format:
+     ```json
+     {
+       "error": {
+         "code": "VALIDATION_ERROR",
+         "message": "List name must be between 1 and 100 characters",
+         "field": "name"
+       }
+     }
+     ```
+   - Input validation:
+     - List names: 1-100 characters, trim whitespace, HTML sanitization
+     - Return 400 with structured validation error messages
+     - Error codes: `VALIDATION_ERROR`, `NOT_FOUND`, `INTERNAL_ERROR`
 
 ```
 
-### Prompt 3: Setup next-i18next
+### Prompt 3: Implement Todo Item API Endpoints
 ```text
-Set up `next-i18next` in the Next.js project. Configure English and Polish as supported languages. Detect the default language from the browser, but allow manual switching via the settings page. Create translation files:
-- `public/locales/en/common.json`
-- `public/locales/pl/common.json`
+Create complete CRUD operations for todo items within lists:
 
-Wrap the app with `appWithTranslation` and configure `next-i18next.config.js`.
+1. **Item Management Endpoints:**
+   - `GET /items?listId=:listId` - fetch items for a specific list where `isDeleted = false`, sorted by completion status and positionInList
+   - `POST /items` - create new item with title, listId, and calculated positionInList using gap indexing
+   - `PATCH /items/:id` - update item title, completion status, or position (only for non-deleted items)
+   - `DELETE /items/:id` - soft-delete item with undo support (set `isDeleted = true, deletedAt = now()`)
+   - `POST /items/:id/toggle` - toggle completion status instantly (only for non-deleted items)
+   - `POST /undo-delete/:id` - restore soft-deleted item using original item ID
+     - Check if `deletedAt` is within 5-second window
+     - Return 410 Gone with `UNDO_EXPIRED` error if window expired
+     - Return 404 with `NOT_FOUND` error if item not found or not deleted
+     - On success: set `isDeleted = false, deletedAt = null` and return 200
+
+2. **Advanced Item Operations:**
+   - `PATCH /items/:id/move` - update positionInList for drag-and-drop reordering
+   - `PATCH /items/:id/move-section` - move between "Todo" and "Done" sections (auto-toggle isCompleted)
+   - Batch operations for multiple item updates
+
+3. **Sorting and Positioning:**
+   - Implement gap indexing for positionInList within each list using same 1000-gap logic as lists
+   - Sort items: incomplete first (by positionInList), then completed (by positionInList)
+   - Handle reordering with stable position calculations (midpoint algorithm + compaction)
+   - When moving between sections (todo/done), recalculate position within target section
+   - Batch position updates for efficient reordering operations
+
+4. **Validation and Business Logic:**
+   - Item title validation: 1-500 characters, trim whitespace, HTML sanitization
+   - Ensure listId exists before creating items
+   - Prevent orphaned items when lists are deleted (cascade handled by Prisma)
+   - Return 400 Bad Request using standard error format for validation failures
+   - Error codes: `VALIDATION_ERROR`, `NOT_FOUND`, `UNDO_EXPIRED`, `INTERNAL_ERROR`
+   - XSS protection for all text inputs
 
 ```
 
-### Prompt 4: Define Prisma Models
+## Iteration 2: Frontend Data Layer
+
+### Prompt 4: Setup TanStack Query and API Integration
 ```text
-In `packages/db/schema.prisma`, define the following data models using Prisma:
+Set up the data fetching layer for the frontend:
 
-model TodoList {
-  id         String     @id @default(cuid())
-  name       String
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
-  orderIndex Int        @default(0)
-  userId     String?    @default("demo")
-  items      TodoItem[]
-  @@unique([userId, orderIndex])
-}
+1. **TanStack Query Configuration:**
+   - Install and configure @tanstack/react-query
+   - Set up QueryClient with proper defaults (staleTime, cacheTime, retry logic)
+   - Create QueryClientProvider in _app.tsx
+   - Add React Query Devtools for development
 
-model TodoItem {
-  id             String   @id @default(cuid())
-  listId         String
-  title          String
-  isCompleted    Boolean  @default(false)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  positionInList Int      @default(0)
-  list           TodoList @relation(fields: [listId], references: [id], onDelete: Cascade)
-  @@unique([listId, positionInList])
-}
+2. **API Client Setup:**
+   - Create centralized API client with axios or fetch
+   - Configure base URL from environment variables (NEXT_PUBLIC_API_URL)
+   - Add request/response interceptors for error handling
+   - Type-safe API methods with TypeScript
+   - Handle missing environment variables with clear error messages
 
-Configure migration and generate the Prisma client. Create migration scripts and seed demo data.
+3. **Custom Hooks for Data Fetching:**
+   - `useListsQuery()` - fetch all lists with optimistic updates
+   - `useListQuery(id)` - fetch single list with items
+   - `useCreateListMutation()` - create new list with optimistic updates
+   - `useUpdateListMutation()` - update list name with validation
+   - `useDeleteListMutation()` - delete with undo functionality
+
+4. **Error Handling and Loading States:**
+   - Global error boundary for unhandled errors
+   - Toast notifications for user feedback using standardized error messages
+   - Parse error responses with `error.code` and `error.message` fields
+   - Loading skeletons and spinners
+   - **Offline handling:**
+     - Network offline detection with "Connection lost" banner at top
+     - Show cached TanStack Query data when offline
+     - Block user actions with "Please check your connection" message
+     - Auto-retry and re-enable actions when connection restored
+   - Handle specific error codes (VALIDATION_ERROR, NOT_FOUND, UNDO_EXPIRED)
 
 ```
 
-### Prompt 5: Setup Backend with Express
+### Prompt 5: Create Todo Lists Management Page
 ```text
-In the `apps/backend` folder, initialize an Express.js server using TypeScript. Add middlewares: `cors`, `express.json()`, and a basic `GET /ping` endpoint. Load `.env` for environment configuration. Connect Prisma Client and implement `GET /lists` to fetch all lists (with items) for `userId = 'demo'`.
+Implement the main todo lists overview page:
+
+1. **Lists Display Component:**
+   - Fetch and display all lists using TanStack Query
+   - Show lists in descending order of orderIndex (newest first)
+   - Use shadcn/ui components for consistent styling
+   - Responsive grid/list layout for mobile and desktop
+
+2. **Empty State Handling:**
+   - Show welcome screen when no lists exist
+   - Include illustration and clear CTA to create first list
+   - Friendly messaging to guide new users
+   - Handle network offline state with cached data and connection banner
+
+3. **List Card Component:**
+   - Display list name, creation date (localized format), and item count
+   - Show preview of first few items
+   - Click to navigate to list detail page
+   - Visual indicators for list status
+   - Use relative dates for recent lists ("2 hours ago"), absolute for older ones
+
+4. **Create New List Functionality:**
+   - "Add New List" button with icon
+   - Optimistic UI updates (show new list immediately)
+   - Handle loading states and error feedback
+   - Focus on title input after creation
+
+5. **Performance Optimization:**
+   - Implement virtual scrolling for large lists (100+ items)
+   - Memoize components to prevent unnecessary re-renders
+   - Efficient re-fetching strategies
+   - Load all lists without pagination in MVP
+   - Monitor performance for future scaling needs
 
 ```
 
-## Iteration 2: REST API
-
-### Prompt 6: List API Endpoints
+### Prompt 6: Implement List Management Features
 ```text
-Implement the following endpoints in the backend:
-- `GET /lists` - fetch all lists for user 'demo' (with nested items)
-- `POST /lists` - create a new list with default name and highest orderIndex
-- `PATCH /lists/:id` - update list name
-- `DELETE /lists/:id` - soft-delete the list with a timeout to allow undo
+Add comprehensive list management functionality:
+
+1. **Inline Editing for List Names:**
+   - Click list title to enter edit mode
+   - Auto-save on blur, Enter key, or after delay
+   - Show loading indicator during save
+   - Revert to previous value on empty input or error
+   - Escape key to cancel editing
+
+2. **List Deletion (Permanent):**
+   - Delete button with confirmation dialog (required)
+   - Permanent deletion - no undo functionality
+   - Remove from UI immediately after successful deletion
+   - Show confirmation: "Are you sure? This will permanently delete the list and all its tasks."
+   - Proper error handling if deletion fails
+
+3. **List Reordering (Drag and Drop):**
+   - Implement drag-and-drop using @dnd-kit or similar
+   - Visual feedback during drag (placeholder, ghost)
+   - Update orderIndex using gap indexing
+   - Optimistic updates with rollback on failure
+   - **Mobile touch interactions:**
+     - Long-press (500ms) to initiate drag mode
+     - Auto-scroll when dragging within 100px of screen edges
+     - Haptic feedback on drag initiation (if available)
+     - Touch-friendly drop zones and visual indicators
+
+4. **List Actions Menu:**
+   - Dropdown menu for each list (rename, duplicate, delete)
+   - Keyboard shortcuts for power users
+   - Bulk operations for multiple lists
 
 ```
 
-### Prompt 7: Item API Endpoints
+### Prompt 7: Create List Detail Page and Navigation
 ```text
-Implement the following endpoints in the backend:
-- `GET /items?listId=...` - fetch items for a given listId
-- `POST /items` - create a new item with default positionInList
-- `PATCH /items/:id` - update title or completion state
-- `DELETE /items/:id` - soft-delete item
-- `POST /undo-delete/:id` - restore item or list marked for deletion
+Implement the individual list detail page:
+
+1. **Dynamic Routing Setup:**
+   - Create `/lists/[id].tsx` dynamic route
+   - Implement proper SSG/ISR for SEO if needed
+   - Handle invalid list IDs with 404 pages
+   - Breadcrumb navigation back to lists overview
+
+2. **List Header Component:**
+   - Editable list title with inline editing
+   - List metadata (creation date with localized formatting, item count, completion stats)
+   - List actions (rename, delete, share settings for future)
+   - Navigation back to lists overview
+   - Use Intl.DateTimeFormat for proper locale-specific date display
+
+3. **Items Display Structure:**
+   - Two distinct sections: "Todo" (incomplete) and "Done" (completed)
+   - Items sorted by positionInList within each section
+   - Section headers with item counts
+   - Collapsible completed section
+
+4. **Loading and Error States:**
+   - Skeleton loading for list and items
+   - Error boundary for list not found
+   - Empty list state: "No tasks yet. Add your first task above."
+   - All completed state: Show completed section with "Clear completed" option
+   - Retry mechanisms for failed data fetching
+   - Graceful degradation for slow connections
 
 ```
 
-## Iteration 3: Frontend - Lists
+## Iteration 3: Todo Items Management
 
-### Prompt 8: Display Todo Lists
+### Prompt 8: Implement Todo Items Display and Management
 ```text
-In the frontend, create a page to fetch and display all todo lists from `GET /lists`. Use TanStack Query for data fetching. Lists should be shown in descending order of `orderIndex`. Use `shadcn/ui` components.
+Create comprehensive todo item management within lists:
+
+1. **Item Display Components:**
+   - TodoItem component with checkbox, title, and actions
+   - Responsive design for mobile and desktop
+   - Visual distinction between completed and incomplete items
+   - Hover states and interactive feedback
+
+2. **Item Creation:**
+   - "Add new task" input at top of todo section
+   - Enter key to create, auto-focus for quick entry
+   - Calculate positionInList using gap indexing (highest + 1000)
+   - Optimistic UI updates with error rollback
+   - Character limit and validation feedback
+
+3. **Item Status Management:**
+   - Instant checkbox toggle for completion status
+   - Smooth animations when moving between sections
+   - Optimistic updates with network sync
+   - Visual feedback for loading states
+   - Undo/redo functionality for accidental toggles
+
+4. **Inline Editing for Item Titles:**
+   - Double-click or dedicated edit button to enter edit mode
+   - Auto-save on blur, Enter, or after short delay
+   - Escape to cancel, validation for empty titles
+   - Real-time character count and limits
+   - Debounced API calls to reduce server load
 
 ```
 
-### Prompt 9: Create & Edit Todo List
+### Prompt 9: Implement Item Actions and Deletion
 ```text
-Add functionality to create a new list (`POST /lists`). Add inline editing for list names using controlled components. On blur or Enter, update the name with `PATCH /lists/:id`. Show a toast and revert on empty name or backend failure.
+Add comprehensive item management actions:
+
+1. **Item Deletion with Undo:**
+   - Delete button with optional confirmation
+   - Soft delete with 5-second undo window
+   - Toast notification with undo button (disabled after 5 seconds)
+   - Optimistic removal from UI
+   - Restore functionality if undo is triggered within window
+   - Handle 410 Gone response gracefully (show "Undo window expired" message)
+
+2. **Item Actions Menu:**
+   - Right-click context menu or dedicated actions button
+   - Options: Edit, Duplicate, Move to another list, Delete
+   - Keyboard shortcuts for power users (Del, Ctrl+D, etc.)
+   - Batch selection for multiple items
+
+3. **Item Search and Filtering:**
+   - Search input to filter items by title
+   - Filter options: All, Active, Completed
+   - Keyboard shortcuts for common filters
+   - Clear search and filter states
+
+4. **Item Metadata and Details:**
+   - Creation and completion timestamps with localized formatting
+   - Use relative dates for recent items, absolute for older ones
+   - Intl.DateTimeFormat for proper locale support (EN/PL)
+   - Optional notes or descriptions (future feature preparation)
+   - Tags or categories (future feature preparation)
+   - Item statistics and history
 
 ```
 
-### Prompt 10: Delete Todo List with Undo
+### Prompt 10: Implement Drag and Drop Functionality
 ```text
-Implement deletion of a list (`DELETE /lists/:id`). Show a toast with "Undo" option for 5 seconds. If clicked, call `POST /undo-delete/:id`. Delay permanent deletion using timeout logic on backend. Re-fetch lists on delete/undo.
+Add advanced drag-and-drop capabilities for item management:
+
+1. **Drag and Drop Setup:**
+   - Install and configure @dnd-kit library
+   - Create draggable item components with proper accessibility
+   - Implement drop zones for both "Todo" and "Done" sections
+   - Visual feedback during drag operations (ghost, placeholder)
+
+2. **Reordering Within Sections:**
+   - Drag items to reorder within "Todo" or "Done" sections
+   - Update positionInList using gap indexing algorithm
+   - Smooth animations for item movements
+   - Handle edge cases (dragging to first/last position)
+
+3. **Moving Between Sections:**
+   - Drag incomplete items to "Done" section (auto-complete)
+   - Drag completed items to "Todo" section (auto-uncomplete)
+   - Visual cues for valid drop zones
+   - Confirmation for important state changes
+
+4. **Advanced Drag Features:**
+   - Multi-item selection and drag
+   - Drag to delete (with confirmation)
+   - Drag items between different lists (future feature)
+   - **Touch/mobile support:**
+     - Long-press (500ms) to initiate drag
+     - Auto-scroll when dragging near screen edges (100px threshold)
+     - Haptic feedback and visual cues for mobile users
+   - Keyboard accessibility for drag operations
+
+5. **Performance and UX:**
+   - Optimistic updates with server sync
+   - Rollback on API failures
+   - Debounced position updates
+   - Smooth animations and transitions
 
 ```
 
-### Prompt 11: Navigate to List Detail
+## Iteration 4: UI/UX Polish and Enhancement
+
+### Prompt 11: Enhanced Error Handling and User Feedback
 ```text
-Implement navigation to list detail at `/lists/:id`. Use Next.js router. Create a `ListPage` component that fetches the list and its items and renders them.
+Implement comprehensive error handling and user feedback systems:
+
+1. **Global Error Handling:**
+   - Error boundary components for unhandled React errors
+   - Global error interceptors for API calls
+   - Automatic retry mechanisms with exponential backoff
+   - Graceful degradation for offline scenarios
+
+2. **User Feedback Systems:**
+   - Toast notification system for success/error messages
+   - Loading skeletons for all data fetching operations
+   - Progress indicators for long-running operations
+   - Form validation with real-time feedback
+
+3. **Optimistic UI Implementation:**
+   - Immediate UI updates for all user actions
+   - Rollback mechanisms when API calls fail
+   - Last-write-wins concurrency (no conflict resolution needed for single user)
+   - Visual indicators for pending operations
+   - Update `updatedAt` timestamps for audit trail
+
+4. **Input Validation and Sanitization:**
+   - Client-side validation before API calls:
+     - List names: 1-100 characters with real-time feedback
+     - Item titles: 1-500 characters with character counter
+   - Empty input prevention with user feedback
+   - HTML sanitization to prevent XSS attacks
+   - Show validation errors inline with helpful messages
 
 ```
 
-## Iteration 4: Frontend - Items
-
-### Prompt 12: Display and Sort Items
+### Prompt 12: Mobile Responsiveness and Accessibility
 ```text
-On the list detail page (`/lists/:id`), fetch items for the list. Display incomplete items first, sorted by `positionInList`, followed by completed items (also sorted). Use two sections: "Todo" and "Done".
+Enhance mobile experience and accessibility compliance:
+
+1. **Mobile-First Responsive Design:**
+   - Optimize all components for mobile devices
+   - Touch-friendly interaction areas (44px minimum)
+   - Swipe gestures for common actions
+   - Mobile-specific navigation patterns
+
+2. **Accessibility Implementation:**
+   - ARIA labels and descriptions for all interactive elements
+   - Keyboard navigation support throughout the app
+   - Screen reader compatibility
+   - High contrast mode support
+   - Focus management for dynamic content
+
+3. **Performance Optimization:**
+   - Code splitting for faster initial load
+   - Image optimization and lazy loading
+   - Bundle size optimization
+   - Virtual scrolling for lists with 100+ items
+   - No pagination needed in MVP (load all data)
+   - Target modern browsers (Chrome 90+, Firefox 88+, Safari 14+, Edge 90+)
+   - Use ES2020+ features without polyfills
+   - Progressive Web App features (optional)
+
+4. **Touch and Gesture Support:**
+   - Swipe to delete items
+   - Pull to refresh functionality
+   - Long press (500ms) for drag initiation and context menus
+   - Auto-scroll during drag near screen edges
+   - Pinch to zoom for accessibility
+   - Haptic feedback for touch interactions
 
 ```
 
-### Prompt 13: Create, Edit, Complete Items
+### Prompt 13: Advanced UI Components and Animations
 ```text
-Allow users to create new tasks for the list. Set `positionInList` to the highest + gap. Allow inline editing of titles. Toggle completion instantly with `PATCH /items/:id`. Use optimistic UI with rollback on failure.
+Implement advanced UI components with smooth animations:
+
+1. **Animation System:**
+   - Smooth transitions for all state changes
+   - Loading animations and micro-interactions
+   - Page transitions using Framer Motion or similar
+   - Stagger animations for list items
+
+2. **Advanced Components:**
+   - Confirmation modals with proper focus management
+   - Dropdown menus with keyboard navigation
+   - Progress bars for bulk operations
+   - Advanced search with filters and sorting
+
+3. **Theme and Styling:**
+   - Consistent design system with Tailwind
+   - Dark mode support (future feature preparation)
+   - Custom color schemes and branding
+   - Print styles for todo lists
+
+4. **Data Visualization:**
+   - Progress charts for list completion
+   - Statistics dashboard for productivity insights
+   - Visual indicators for overdue items (future feature)
+   - Export functionality for lists and items
 
 ```
 
-### Prompt 14: Delete Items with Undo
+## Iteration 5: Testing and Production Readiness
+
+### Prompt 14: Comprehensive Testing Implementation
 ```text
-Allow deleting a task with undo support. Use the same logic as for lists (soft delete with timeout, undo toast, `POST /undo-delete/:id`). Re-fetch tasks after operation.
+Implement thorough testing across the application:
+
+1. **Backend Testing:**
+   - Unit tests for all API endpoints using Jest/Vitest
+   - Integration tests for database operations
+   - API contract testing with Prisma
+   - Error handling and edge case testing
+
+2. **Frontend Testing:**
+   - Component testing with React Testing Library
+   - Hook testing for custom TanStack Query hooks
+   - Integration testing for complete user flows
+   - Visual regression testing with Chromatic/Percy
+
+3. **End-to-End Testing:**
+   - E2E tests using Playwright covering critical user journeys
+   - Cross-browser compatibility testing
+   - Mobile device testing
+   - Performance testing and optimization
+
+4. **Testing Infrastructure:**
+   - CI/CD pipeline with automated testing
+   - Test data factories and fixtures
+   - Mock API server for frontend testing
+   - Database seeding for consistent test environments
 
 ```
 
-### Prompt 15: Drag and Drop Support
+### Prompt 15: Production Deployment and Monitoring
 ```text
-Implement drag-and-drop to reorder tasks in the same section and move between "Todo" and "Done". Update `positionInList` and `isCompleted` on drop. Use a stable indexing algorithm and update state optimistically.
+Prepare the application for production deployment:
+
+1. **Database Setup and Migrations:**
+   - Production database configuration
+   - Migration scripts and deployment strategy
+   - Data backup and recovery procedures
+   - Database performance optimization
+
+2. **Environment Configuration:**
+   - Production environment variables setup:
+     - Frontend: NEXT_PUBLIC_API_URL
+     - Backend: DATABASE_URL, PORT (optional)
+   - Security headers and CORS configuration
+   - SSL/TLS configuration
+   - Rate limiting and API protection
+
+3. **Deployment Strategy:**
+   - Docker containerization for both frontend and backend
+   - Vercel deployment for frontend with proper build configuration
+   - Backend deployment (Railway, Render, or similar)
+   - Database hosting with Supabase or similar
+
+4. **Monitoring and Analytics:**
+   - Error tracking with Sentry or similar
+   - Performance monitoring and alerts
+   - User analytics and usage tracking
+   - Health check endpoints and uptime monitoring
 
 ```
 
-## Iteration 5: UX Polish & Settings
-
-### Prompt 16: Optimistic UI and Error Handling
+### Prompt 16: Documentation and Developer Experience
 ```text
-Ensure all update operations (edit, toggle, reorder) use optimistic UI with rollback support. Show toast messages on failure. Prevent updates if input is empty.
+Create comprehensive documentation and improve developer experience:
 
-```
+1. **Code Documentation:**
+   - JSDoc comments for all functions and components
+   - README files for each workspace
+   - API documentation with examples
+   - Architecture decision records (ADRs)
 
-### Prompt 17: Language Switcher and Translations
-```text
-Implement a settings page accessible from sidebar. Add a language switcher with support for `en` and `pl`. Update `i18n.language` via `next-i18next`. Confirm UI updates dynamically.
+2. **Developer Tools:**
+   - ESLint and Prettier configuration refinement
+   - Pre-commit hooks with Husky
+   - Development scripts and utilities
+   - Local development environment setup guide
 
-```
+3. **User Documentation:**
+   - User guide for the todo application
+   - Feature documentation with screenshots
+   - Troubleshooting guide
+   - Accessibility guide for users
 
-### Prompt 18: Sidebar and Routing
-```text
-Add a sidebar with two options: "Todo" and "Settings". Implement routing to switch between views. On small screens, show hamburger menu.
-
-```
-
-### Prompt 19: Mobile Friendly Layout
-```text
-Ensure all components are responsive. Use Tailwind responsive classes. Add a welcome screen if there are no lists, with illustration and CTA.
-
-```
-
-### Prompt 20: Component Integration & Final Wiring
-```text
-Ensure all parts of the app are connected. Lists and items fetch from backend, update state, show toasts, and reflect backend state. Verify no orphan components or disconnected flows remain.
+4. **Deployment Documentation:**
+   - Step-by-step deployment guide
+   - Environment setup instructions
+   - Backup and recovery procedures
+   - Scaling and maintenance guidelines
 
 ```
 

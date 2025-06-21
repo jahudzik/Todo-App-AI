@@ -23,20 +23,24 @@ The project is organized as a pnpm monorepo:
 ## Data Model
 
 Two main entities with specific constraints:
-- `TodoList` with `orderIndex` for sorting (unique per user)
-- `TodoItem` with `positionInList` for sorting within lists (unique per list)
-- Soft deletion with undo functionality (5-second timeout)
-- Gap indexing used for stable sorting when reordering
+- `TodoList` with `orderIndex` for sorting (unique per user) and soft delete fields (`isDeleted`, `deletedAt`)
+- `TodoItem` with `positionInList` for sorting within lists (unique per list) and soft delete fields
+- **Soft deletion behavior:**
+  - Items only: 5-second undo functionality with background cleanup
+  - Lists: Immediate permanent deletion (cascade to all items)
+- **Gap indexing:** 1000-unit gaps with midpoint calculation and compaction when gaps < 10
+- **Validation:** List names 1-100 chars, item titles 1-500 chars, HTML sanitized
 
 ## Key Features
 
 - Multiple todo lists per user with drag-and-drop reordering
 - Tasks sorted by completion status, then position
-- Inline editing with validation (empty values rejected)
+- Inline editing with validation (empty values rejected, character limits enforced)
 - Optimistic UI with rollback on API failures
-- Undo deletion with toast notifications
-- Mobile-responsive design with hamburger menu
-- Language switching (EN/PL) in settings
+- Undo deletion with toast notifications (items only, 5-second window)
+- Mobile-responsive design with hamburger menu and long-press drag initiation
+- Language switching (EN/PL) in settings with localized date formatting
+- Offline handling: cached data display with "Connection lost" banner
 
 ## Development Workflow
 
@@ -69,9 +73,13 @@ pnpm db:studio      # Open Prisma Studio
 
 ## Important Implementation Notes
 
-- Use gap indexing for `orderIndex` and `positionInList` to avoid conflicts during reordering
-- All text inputs must validate against empty values and revert on failure
-- API errors should show user-friendly toast messages and restore previous state
+- **Gap indexing:** Use 1000-unit gaps for `orderIndex` and `positionInList`, with midpoint calculation for insertions
+- **Validation:** All text inputs must validate length limits and reject empty values with revert on failure
+- **Error handling:** Use standardized JSON error format with specific codes (VALIDATION_ERROR, NOT_FOUND, UNDO_EXPIRED)
+- **Soft delete:** Only for TodoItems (5-second undo), TodoLists use immediate cascade deletion
+- **Mobile drag-and-drop:** Long-press (500ms) to initiate, auto-scroll near screen edges
+- **API responses:** Proper HTTP status codes (200, 201, 400, 404, 410, 500) with descriptive messages
+- **Offline behavior:** Show cached data, block actions, display connection banner
 - Drag-and-drop between completed/incomplete sections automatically toggles `isCompleted`
 - The UI should be generated via AI prompts and not manually modified after creation
 - Mobile-first responsive design is critical for UX
@@ -80,6 +88,26 @@ pnpm db:studio      # Open Prisma Studio
 
 - Do not mention Claude or AI tools in commit messages
 - Keep commit messages professional and focused on the technical changes
+
+## Environment Variables
+
+**Frontend (.env.local):**
+```bash
+NEXT_PUBLIC_API_URL=http://localhost:3001
+```
+
+**Backend (.env):**
+```bash
+DATABASE_URL=postgresql://username:password@localhost:5432/todoapp
+PORT=3001  # optional, defaults to 3001
+```
+
+## Browser Support
+
+- Modern browsers only: Chrome 90+, Firefox 88+, Safari 14+, Edge 90+
+- Mobile: iOS Safari 14+, Chrome Mobile 90+
+- No Internet Explorer support
+- ES2020+ features used without polyfills
 
 ## Additional notes
 
