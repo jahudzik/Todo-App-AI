@@ -1,0 +1,60 @@
+### Health Check - Verify backend is running
+GET http://localhost:3001/ping
+
+### Get All Todo Lists - Should return seeded data
+GET http://localhost:3001/api/lists
+
+### Get All Todo Lists with Accept Header
+GET http://localhost:3001/api/lists
+Accept: application/json
+
+### Test 404 Route - Should return not found error
+GET http://localhost:3001/api/nonexistent
+
+### Health Check with verbose headers
+GET http://localhost:3001/ping
+User-Agent: VSCode REST Client
+Accept: application/json
+
+### Test CORS headers
+GET http://localhost:3001/api/lists
+Origin: http://localhost:3000
+
+### Future endpoints (uncomment when implemented)
+
+# ### Create a new todo list
+# POST http://localhost:3001/api/lists
+# Content-Type: application/json
+# 
+# {
+#   "name": "Shopping List",
+#   "orderIndex": 300
+# }
+
+# ### Update a todo list
+# PUT http://localhost:3001/api/lists/LIST_ID
+# Content-Type: application/json
+# 
+# {
+#   "name": "Updated List Name"
+# }
+
+# ### Delete a todo list
+# DELETE http://localhost:3001/api/lists/LIST_ID
+
+# ### Create a new todo item
+# POST http://localhost:3001/api/lists/LIST_ID/items
+# Content-Type: application/json
+# 
+# {
+#   "title": "Buy milk",
+#   "positionInList": 400
+# }
+
+# ### Toggle todo item completion
+# PATCH http://localhost:3001/api/items/ITEM_ID
+# Content-Type: application/json
+# 
+# {
+#   "isCompleted": true
+# }
