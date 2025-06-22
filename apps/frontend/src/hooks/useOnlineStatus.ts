@@ -12,12 +12,16 @@ import { useState, useEffect } from 'react';
  * @returns Object containing online status and helper methods
  */
 export const useOnlineStatus = () => {
-  // Initialize with current navigator.onLine status
-  // Note: navigator.onLine can be unreliable but it's the best we have
-  const [isOnline, setIsOnline] = useState(true); // Default to online
+  // Initialize with navigator.onLine status if available, otherwise assume online
+  const [isOnline, setIsOnline] = useState(() => {
+    if (typeof navigator !== 'undefined') {
+      return navigator.onLine;
+    }
+    return true; // Default to online during SSR
+  });
 
   useEffect(() => {
-    // Set initial state based on navigator.onLine when component mounts
+    // Double-check initial state when component mounts (client-side only)
     if (typeof navigator !== 'undefined') {
       setIsOnline(navigator.onLine);
     }
@@ -38,53 +42,13 @@ export const useOnlineStatus = () => {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Optional: Add additional checks using fetch or ping
-    // This can help detect cases where navigator.onLine is true but there's no actual connectivity
-    
-    // Periodic connectivity check (every 30 seconds when online)
-    const checkConnectivity = async () => {
-      if (!navigator.onLine) {
-        setIsOnline(false);
-        return;
-      }
-
-      try {
-        // Try to fetch a small resource to verify actual connectivity
-        // Using a HEAD request to minimize data usage
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
-
-        const response = await fetch('/favicon.ico', {
-          method: 'HEAD',
-          cache: 'no-cache',
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeoutId);
-
-        if (response.ok) {
-          setIsOnline(true);
-        } else {
-          setIsOnline(false);
-        }
-      } catch (error) {
-        // Fetch failed, likely offline or network error
-        console.log('Network: Connectivity check failed', error);
-        setIsOnline(false);
-      }
-    };
-
-    // Start periodic checks
-    const intervalId = setInterval(checkConnectivity, 30000); // Check every 30 seconds
-
-    // Initial connectivity check
-    checkConnectivity();
+    // For MVP, we'll rely on browser events rather than periodic checks
+    // This prevents false positives from failed favicon or API requests
 
     // Cleanup function
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
-      clearInterval(intervalId);
     };
   }, []);
 
