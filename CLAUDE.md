@@ -159,12 +159,80 @@ PORT=3001  # optional, defaults to 3001
 
 ## Testing Requirements
 
-- **MANDATORY:** All new business logic must include comprehensive unit tests
-- **Test Coverage:** Aim for 80%+ code coverage on new functions and modules
+- **MANDATORY:** All new business logic must include comprehensive unit tests with 80%+ coverage
+- **Test Coverage Standards:**
+  - **Minimum 80% code coverage** for all new functions and modules
+  - **100% coverage required** for critical business logic (gap indexing, validation, error handling)
+  - **Line coverage, branch coverage, and function coverage** must all meet minimum thresholds
+  - Use coverage reports to identify untested code paths and edge cases
 - **Testing Framework:** Jest with TypeScript support for backend, Vitest for frontend
-- **Test Types:** Unit tests for utilities/business logic, integration tests for API endpoints
-- **Critical Areas:** Gap indexing, validation logic, error handling, database operations
-- **Test First:** When implementing complex logic, write tests alongside or before implementation
+- **Test Types Required:**
+  - **Unit tests:** All controller methods, utilities, business logic functions
+  - **Integration tests:** API endpoints with database interactions
+  - **Error path testing:** All validation errors, database errors, edge cases
+  - **Boundary testing:** Input limits, edge values, constraint violations
+- **Critical Areas Requiring 100% Coverage:**
+  - Gap indexing algorithms and position calculations
+  - Input validation and sanitization logic
+  - Error handling and response formatting
+  - Database operations and transaction logic
+  - Authentication and authorization flows (when implemented)
+- **Test Structure Requirements:**
+  - **Comprehensive mocking** of all external dependencies
+  - **Happy path testing** for all success scenarios
+  - **Error path testing** for all failure scenarios
+  - **Edge case testing** for boundary conditions
+  - **Business logic verification** beyond just function calls
+  - **Response format validation** for API endpoints
+- **Test First Development:** When implementing complex logic, write tests alongside or before implementation
+- **Coverage Verification:** Run coverage reports regularly and address any gaps below 80%
+
+## API Testing and Documentation
+
+**CRITICAL: The `api-tests.http` file must be maintained and validated after ALL API changes**
+
+### api-tests.http Maintenance Requirements
+
+1. **After any API endpoint changes (create, modify, delete endpoints):**
+   - Update `api-tests.http` with comprehensive test cases for all new/modified endpoints
+   - Include positive test cases (success scenarios)
+   - Include negative test cases (validation errors, 404s, 400s, etc.)
+   - Include edge cases and boundary testing
+   - Test all HTTP methods (GET, POST, PATCH, DELETE)
+   - Test all query parameters and request body variations
+
+2. **Test case structure for each endpoint:**
+   - Basic success case with valid data
+   - Validation errors (empty fields, too long inputs, invalid formats)
+   - Authentication/authorization errors (when applicable)
+   - Not found errors (non-existent IDs)
+   - Conflict errors (unique constraint violations)
+   - Edge cases specific to the endpoint functionality
+
+3. **Required test coverage:**
+   - All CRUD operations for each resource
+   - All endpoint variations (different query params, path params)
+   - HTML sanitization testing (XSS prevention)
+   - Input validation boundary testing
+   - Error response format validation
+   - Rate limiting tests (when applicable)
+
+4. **File organization:**
+   - Group related endpoints together with clear section headers
+   - Include descriptive comments for each test case
+   - Mark placeholder values clearly (e.g., "REPLACE_WITH_ACTUAL_ID")
+   - Maintain consistent formatting and naming conventions
+
+5. **Validation workflow:**
+   - After updating `api-tests.http`, manually test key endpoints to ensure they work
+   - Verify error responses match the documented error codes and formats
+   - Check that all new endpoints are properly documented in the test file
+
+**This ensures the API testing file remains a reliable reference for:**
+- API documentation and usage examples
+- Manual testing during development
+- Integration testing scenarios
+- Debugging and troubleshooting API issues
 
 ## Additional notes
 

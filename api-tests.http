@@ -77,19 +77,410 @@ DELETE http://localhost:3001/api/lists/non-existent-id
 ### Delete with invalid ID format (400 error)
 DELETE http://localhost:3001/api/lists/invalid-id-format
 
-# ### Create a new todo item
-# POST http://localhost:3001/api/lists/LIST_ID/items
-# Content-Type: application/json
-# 
-# {
-#   "title": "Buy milk",
-#   "positionInList": 400
-# }
+###############################################################################
+# TODO ITEMS ENDPOINTS
+###############################################################################
 
-# ### Toggle todo item completion
-# PATCH http://localhost:3001/api/items/ITEM_ID
-# Content-Type: application/json
-# 
-# {
-#   "isCompleted": true
-# }
+### Get items for a specific list - REPLACE WITH ACTUAL LIST ID
+GET http://localhost:3001/api/items?listId=REPLACE_WITH_LIST_ID
+Accept: application/json
+
+### Get items with invalid list ID (400 error)
+GET http://localhost:3001/api/items?listId=invalid-id-format
+Accept: application/json
+
+### Get items for non-existent list (404 error)
+GET http://localhost:3001/api/items?listId=clistnonexistent1234567890123
+Accept: application/json
+
+### Get items without list ID parameter (400 error)
+GET http://localhost:3001/api/items
+Accept: application/json
+
+### Create a new todo item - REPLACE WITH ACTUAL LIST ID
+POST http://localhost:3001/api/items
+Content-Type: application/json
+
+{
+  "title": "Buy milk",
+  "listId": "REPLACE_WITH_LIST_ID"
+}
+
+### Create another todo item for testing ordering
+POST http://localhost:3001/api/items
+Content-Type: application/json
+
+{
+  "title": "Buy bread",
+  "listId": "REPLACE_WITH_LIST_ID"
+}
+
+### Create item with validation error - empty title
+POST http://localhost:3001/api/items
+Content-Type: application/json
+
+{
+  "title": "",
+  "listId": "REPLACE_WITH_LIST_ID"
+}
+
+### Create item with validation error - title too long
+POST http://localhost:3001/api/items
+Content-Type: application/json
+
+{
+  "title": "This is an extremely long todo item title that exceeds the 500 character limit. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
+  "listId": "REPLACE_WITH_LIST_ID"
+}
+
+### Create item with HTML sanitization test
+POST http://localhost:3001/api/items
+Content-Type: application/json
+
+{
+  "title": "<script>alert('xss')</script>Clean up desk",
+  "listId": "REPLACE_WITH_LIST_ID"
+}
+
+### Create item with missing listId (400 error)
+POST http://localhost:3001/api/items
+Content-Type: application/json
+
+{
+  "title": "This should fail"
+}
+
+### Create item for non-existent list (404 error)
+POST http://localhost:3001/api/items
+Content-Type: application/json
+
+{
+  "title": "This should fail",
+  "listId": "clistnonexistent1234567890123"
+}
+
+### Update todo item title - REPLACE WITH ACTUAL ITEM ID
+PATCH http://localhost:3001/api/items/REPLACE_WITH_ITEM_ID
+Content-Type: application/json
+
+{
+  "title": "Buy organic milk"
+}
+
+### Update todo item completion status - REPLACE WITH ACTUAL ITEM ID
+PATCH http://localhost:3001/api/items/REPLACE_WITH_ITEM_ID
+Content-Type: application/json
+
+{
+  "isCompleted": true
+}
+
+### Update todo item position - REPLACE WITH ACTUAL ITEM ID
+PATCH http://localhost:3001/api/items/REPLACE_WITH_ITEM_ID
+Content-Type: application/json
+
+{
+  "positionInList": 2000
+}
+
+### Update item with multiple fields - REPLACE WITH ACTUAL ITEM ID
+PATCH http://localhost:3001/api/items/REPLACE_WITH_ITEM_ID
+Content-Type: application/json
+
+{
+  "title": "Buy almond milk",
+  "isCompleted": false,
+  "positionInList": 1500
+}
+
+### Update item with validation error - empty title
+PATCH http://localhost:3001/api/items/REPLACE_WITH_ITEM_ID
+Content-Type: application/json
+
+{
+  "title": ""
+}
+
+### Update item with invalid completion status
+PATCH http://localhost:3001/api/items/REPLACE_WITH_ITEM_ID
+Content-Type: application/json
+
+{
+  "isCompleted": "invalid"
+}
+
+### Update item with invalid position
+PATCH http://localhost:3001/api/items/REPLACE_WITH_ITEM_ID
+Content-Type: application/json
+
+{
+  "positionInList": -1
+}
+
+### Update non-existent item (404 error)
+PATCH http://localhost:3001/api/items/citemnonexistent1234567890123
+Content-Type: application/json
+
+{
+  "title": "This should fail"
+}
+
+### Update item with invalid ID format (400 error)
+PATCH http://localhost:3001/api/items/invalid-id-format
+Content-Type: application/json
+
+{
+  "title": "This should fail"
+}
+
+### Toggle item completion status - REPLACE WITH ACTUAL ITEM ID
+POST http://localhost:3001/api/items/REPLACE_WITH_ITEM_ID/toggle
+Content-Type: application/json
+
+### Toggle non-existent item (404 error)
+POST http://localhost:3001/api/items/citemnonexistent1234567890123/toggle
+Content-Type: application/json
+
+### Toggle item with invalid ID format (400 error)
+POST http://localhost:3001/api/items/invalid-id-format/toggle
+Content-Type: application/json
+
+### Move item to new position - REPLACE WITH ACTUAL ITEM ID
+PATCH http://localhost:3001/api/items/REPLACE_WITH_ITEM_ID/move
+Content-Type: application/json
+
+{
+  "newPosition": 3000
+}
+
+### Move item relative to another position - REPLACE WITH ACTUAL ITEM ID
+PATCH http://localhost:3001/api/items/REPLACE_WITH_ITEM_ID/move
+Content-Type: application/json
+
+{
+  "insertAfterPosition": 2500
+}
+
+### Move item to end of list - REPLACE WITH ACTUAL ITEM ID
+PATCH http://localhost:3001/api/items/REPLACE_WITH_ITEM_ID/move
+Content-Type: application/json
+
+{}
+
+### Move item with invalid position value
+PATCH http://localhost:3001/api/items/REPLACE_WITH_ITEM_ID/move
+Content-Type: application/json
+
+{
+  "newPosition": -500
+}
+
+### Move item between sections (todo to done) - REPLACE WITH ACTUAL ITEM ID
+PATCH http://localhost:3001/api/items/REPLACE_WITH_ITEM_ID/move-section
+Content-Type: application/json
+
+{
+  "targetSection": "done"
+}
+
+### Move item between sections (done to todo) - REPLACE WITH ACTUAL ITEM ID
+PATCH http://localhost:3001/api/items/REPLACE_WITH_ITEM_ID/move-section
+Content-Type: application/json
+
+{
+  "targetSection": "todo"
+}
+
+### Move item with relative positioning in target section - REPLACE WITH ACTUAL ITEM ID
+PATCH http://localhost:3001/api/items/REPLACE_WITH_ITEM_ID/move-section
+Content-Type: application/json
+
+{
+  "targetSection": "done",
+  "insertAfterPosition": 2000
+}
+
+### Move item with invalid target section
+PATCH http://localhost:3001/api/items/REPLACE_WITH_ITEM_ID/move-section
+Content-Type: application/json
+
+{
+  "targetSection": "invalid"
+}
+
+### Batch update multiple items - REPLACE WITH ACTUAL ITEM IDs
+PATCH http://localhost:3001/api/items/batch
+Content-Type: application/json
+
+{
+  "updates": [
+    {
+      "id": "REPLACE_WITH_ITEM_ID_1",
+      "title": "Updated Item 1",
+      "isCompleted": true
+    },
+    {
+      "id": "REPLACE_WITH_ITEM_ID_2",
+      "positionInList": 4000
+    },
+    {
+      "id": "REPLACE_WITH_ITEM_ID_3",
+      "title": "Updated Item 3",
+      "isCompleted": false,
+      "positionInList": 5000
+    }
+  ]
+}
+
+### Batch update with empty array (400 error)
+PATCH http://localhost:3001/api/items/batch
+Content-Type: application/json
+
+{
+  "updates": []
+}
+
+### Batch update with invalid item ID (400 error)
+PATCH http://localhost:3001/api/items/batch
+Content-Type: application/json
+
+{
+  "updates": [
+    {
+      "id": "invalid-id-format",
+      "title": "This should fail"
+    }
+  ]
+}
+
+### Batch update with non-existent item (404 error)
+PATCH http://localhost:3001/api/items/batch
+Content-Type: application/json
+
+{
+  "updates": [
+    {
+      "id": "citemnonexistent1234567890123",
+      "title": "This should fail"
+    }
+  ]
+}
+
+### Batch update with too many items (400 error)
+PATCH http://localhost:3001/api/items/batch
+Content-Type: application/json
+
+{
+  "updates": [
+    {"id": "citem00001234567890123456", "title": "Item 1"},
+    {"id": "citem00002234567890123456", "title": "Item 2"},
+    {"id": "citem00003234567890123456", "title": "Item 3"},
+    {"id": "citem00004234567890123456", "title": "Item 4"},
+    {"id": "citem00005234567890123456", "title": "Item 5"},
+    {"id": "citem00006234567890123456", "title": "Item 6"},
+    {"id": "citem00007234567890123456", "title": "Item 7"},
+    {"id": "citem00008234567890123456", "title": "Item 8"},
+    {"id": "citem00009234567890123456", "title": "Item 9"},
+    {"id": "citem00010234567890123456", "title": "Item 10"},
+    {"id": "citem00011234567890123456", "title": "Item 11"},
+    {"id": "citem00012234567890123456", "title": "Item 12"},
+    {"id": "citem00013234567890123456", "title": "Item 13"},
+    {"id": "citem00014234567890123456", "title": "Item 14"},
+    {"id": "citem00015234567890123456", "title": "Item 15"},
+    {"id": "citem00016234567890123456", "title": "Item 16"},
+    {"id": "citem00017234567890123456", "title": "Item 17"},
+    {"id": "citem00018234567890123456", "title": "Item 18"},
+    {"id": "citem00019234567890123456", "title": "Item 19"},
+    {"id": "citem00020234567890123456", "title": "Item 20"},
+    {"id": "citem00021234567890123456", "title": "Item 21"},
+    {"id": "citem00022234567890123456", "title": "Item 22"},
+    {"id": "citem00023234567890123456", "title": "Item 23"},
+    {"id": "citem00024234567890123456", "title": "Item 24"},
+    {"id": "citem00025234567890123456", "title": "Item 25"},
+    {"id": "citem00026234567890123456", "title": "Item 26"},
+    {"id": "citem00027234567890123456", "title": "Item 27"},
+    {"id": "citem00028234567890123456", "title": "Item 28"},
+    {"id": "citem00029234567890123456", "title": "Item 29"},
+    {"id": "citem00030234567890123456", "title": "Item 30"},
+    {"id": "citem00031234567890123456", "title": "Item 31"},
+    {"id": "citem00032234567890123456", "title": "Item 32"},
+    {"id": "citem00033234567890123456", "title": "Item 33"},
+    {"id": "citem00034234567890123456", "title": "Item 34"},
+    {"id": "citem00035234567890123456", "title": "Item 35"},
+    {"id": "citem00036234567890123456", "title": "Item 36"},
+    {"id": "citem00037234567890123456", "title": "Item 37"},
+    {"id": "citem00038234567890123456", "title": "Item 38"},
+    {"id": "citem00039234567890123456", "title": "Item 39"},
+    {"id": "citem00040234567890123456", "title": "Item 40"},
+    {"id": "citem00041234567890123456", "title": "Item 41"},
+    {"id": "citem00042234567890123456", "title": "Item 42"},
+    {"id": "citem00043234567890123456", "title": "Item 43"},
+    {"id": "citem00044234567890123456", "title": "Item 44"},
+    {"id": "citem00045234567890123456", "title": "Item 45"},
+    {"id": "citem00046234567890123456", "title": "Item 46"},
+    {"id": "citem00047234567890123456", "title": "Item 47"},
+    {"id": "citem00048234567890123456", "title": "Item 48"},
+    {"id": "citem00049234567890123456", "title": "Item 49"},
+    {"id": "citem00050234567890123456", "title": "Item 50"},
+    {"id": "citem00051234567890123456", "title": "Item 51"},
+    {"id": "citem00052234567890123456", "title": "Item 52"},
+    {"id": "citem00053234567890123456", "title": "Item 53"},
+    {"id": "citem00054234567890123456", "title": "Item 54"},
+    {"id": "citem00055234567890123456", "title": "Item 55"},
+    {"id": "citem00056234567890123456", "title": "Item 56"},
+    {"id": "citem00057234567890123456", "title": "Item 57"},
+    {"id": "citem00058234567890123456", "title": "Item 58"},
+    {"id": "citem00059234567890123456", "title": "Item 59"},
+    {"id": "citem00060234567890123456", "title": "Item 60"},
+    {"id": "citem00061234567890123456", "title": "Item 61"},
+    {"id": "citem00062234567890123456", "title": "Item 62"},
+    {"id": "citem00063234567890123456", "title": "Item 63"},
+    {"id": "citem00064234567890123456", "title": "Item 64"},
+    {"id": "citem00065234567890123456", "title": "Item 65"},
+    {"id": "citem00066234567890123456", "title": "Item 66"},
+    {"id": "citem00067234567890123456", "title": "Item 67"},
+    {"id": "citem00068234567890123456", "title": "Item 68"},
+    {"id": "citem00069234567890123456", "title": "Item 69"},
+    {"id": "citem00070234567890123456", "title": "Item 70"},
+    {"id": "citem00071234567890123456", "title": "Item 71"},
+    {"id": "citem00072234567890123456", "title": "Item 72"},
+    {"id": "citem00073234567890123456", "title": "Item 73"},
+    {"id": "citem00074234567890123456", "title": "Item 74"},
+    {"id": "citem00075234567890123456", "title": "Item 75"},
+    {"id": "citem00076234567890123456", "title": "Item 76"},
+    {"id": "citem00077234567890123456", "title": "Item 77"},
+    {"id": "citem00078234567890123456", "title": "Item 78"},
+    {"id": "citem00079234567890123456", "title": "Item 79"},
+    {"id": "citem00080234567890123456", "title": "Item 80"},
+    {"id": "citem00081234567890123456", "title": "Item 81"},
+    {"id": "citem00082234567890123456", "title": "Item 82"},
+    {"id": "citem00083234567890123456", "title": "Item 83"},
+    {"id": "citem00084234567890123456", "title": "Item 84"},
+    {"id": "citem00085234567890123456", "title": "Item 85"},
+    {"id": "citem00086234567890123456", "title": "Item 86"},
+    {"id": "citem00087234567890123456", "title": "Item 87"},
+    {"id": "citem00088234567890123456", "title": "Item 88"},
+    {"id": "citem00089234567890123456", "title": "Item 89"},
+    {"id": "citem00090234567890123456", "title": "Item 90"},
+    {"id": "citem00091234567890123456", "title": "Item 91"},
+    {"id": "citem00092234567890123456", "title": "Item 92"},
+    {"id": "citem00093234567890123456", "title": "Item 93"},
+    {"id": "citem00094234567890123456", "title": "Item 94"},
+    {"id": "citem00095234567890123456", "title": "Item 95"},
+    {"id": "citem00096234567890123456", "title": "Item 96"},
+    {"id": "citem00097234567890123456", "title": "Item 97"},
+    {"id": "citem00098234567890123456", "title": "Item 98"},
+    {"id": "citem00099234567890123456", "title": "Item 99"},
+    {"id": "citem00100234567890123456", "title": "Item 100"},
+    {"id": "citem00101234567890123456", "title": "Item 101"}
+  ]
+}
+
+### Delete todo item - REPLACE WITH ACTUAL ITEM ID
+DELETE http://localhost:3001/api/items/REPLACE_WITH_ITEM_ID
+
+### Delete non-existent item (404 error)
+DELETE http://localhost:3001/api/items/citemnonexistent1234567890123
+
+### Delete item with invalid ID format (400 error)
+DELETE http://localhost:3001/api/items/invalid-id-format
