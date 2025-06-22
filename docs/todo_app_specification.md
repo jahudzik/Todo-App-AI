@@ -20,7 +20,7 @@ A simple, elegant, and modern web-based todo list application operating in a cli
   - Relative dates for recent items using `Intl.RelativeTimeFormat` ("2 hours ago" / "2 godziny temu")
   - Absolute dates for older items using `Intl.DateTimeFormat` (localized format: MM/DD/YYYY for EN, DD/MM/YYYY for PL)
   - Display creation dates in list cards and item metadata
-- **State Management**: TanStack Query (React Query) with optimistic UI or refetch
+- **State Management**: TanStack Query (React Query) with optimistic UI updates, automatic rollback, and comprehensive error handling
 - **Authentication**: not in MVP; all data belongs to a single shared demo user (`userId = 'demo'`)
 - **Design**: AI-generated UI refined via prompt engineering; not modified manually after creation
 
@@ -135,6 +135,31 @@ Notes:
 
 ---
 
+### Data Fetching Architecture
+
+**TanStack Query Implementation:**
+- **QueryClient Configuration**: Centralized setup with 5-minute stale time, 10-minute garbage collection, and intelligent retry logic
+- **Custom Hooks**: Type-safe hooks for all CRUD operations with optimistic updates and automatic cache management
+- **API Client**: Axios-based client with TypeScript interfaces, request/response interceptors, and standardized error handling
+- **Optimistic Updates**: Immediate UI feedback for all mutations with automatic rollback on API failures
+- **Cache Strategy**: Smart invalidation and background refetching with query key hierarchies
+- **Development Tools**: React Query Devtools enabled in development environment only
+
+**Error Boundary System:**
+- **Global Error Boundary**: Catches unhandled React errors with user-friendly fallback UI and retry mechanisms
+- **API Error Handling**: Standardized error parsing with toast notifications and graceful degradation
+- **Input Validation**: Real-time validation with immediate feedback and revert on empty values
+- **Network Error Detection**: Automatic offline detection with visual banners and action blocking
+
+**Offline Support:**
+- **Network Status Monitoring**: Real-time connectivity detection using navigator.onLine and periodic fetch verification
+- **Offline Banner**: Translated banner (EN/PL) displayed when connection is lost with visual indicators
+- **Cached Data Access**: Show cached TanStack Query data when offline with clear offline indicators
+- **Action Blocking**: Disable form submissions and mutations with "Please check your connection" messages
+- **Auto-Recovery**: Automatic re-enabling of features and retry of failed requests when connection is restored
+
+---
+
 ### Error Handling
 
 - **Backend**: proper HTTP status codes with descriptive messages
@@ -235,15 +260,45 @@ PORT=3001
 
 ---
 
-### Testing Plan
+### Testing Requirements
 
-- Backend: unit tests (e.g., with Vitest or Jest)
-- Frontend: component tests (e.g., React Testing Library)
-- E2E tests (optional, e.g., Playwright)
-- Manual tests:
-  - list/task CRUD
-  - status toggle
-  - live editing
-  - drag-and-drop sorting
-  - undo deletion
-  - language switching
+**Coverage Standards:**
+- **Minimum 80% code coverage** for all new functions and modules
+- **100% coverage required** for critical business logic (gap indexing, validation, error handling)
+- **Line coverage, branch coverage, and function coverage** must all meet minimum thresholds
+
+**Testing Framework:**
+- **Backend**: Jest with comprehensive unit and integration testing (120+ tests currently)
+- **Frontend**: Jest + React Testing Library + Vitest with custom hooks testing (75+ tests currently)
+- **Test Environment**: jsdom for frontend, mocked Prisma for backend
+
+**Test Types Required:**
+- **Unit Tests**: All controller methods, utilities, business logic functions, custom hooks
+- **Integration Tests**: API endpoints with database interactions, React Query hooks with API calls
+- **Error Path Testing**: All validation errors, database errors, network failures, edge cases
+- **Happy Path Testing**: All success scenarios with comprehensive user flow coverage
+- **Component Testing**: React components with user interactions and state changes
+
+**Critical Areas with 100% Coverage:**
+- Gap indexing algorithms and position calculations
+- Input validation and sanitization logic  
+- Error handling and response formatting
+- Database operations and transaction logic
+- API client error interception and retry logic
+- Offline detection and network status management
+
+**Test Structure:**
+- **Comprehensive Mocking**: All external dependencies (API calls, database, localStorage)
+- **Optimistic Update Testing**: Verify UI updates and rollback scenarios
+- **Error Scenario Testing**: Network failures, validation errors, server errors
+- **Cache Management Testing**: Query invalidation, background refetching, stale data handling
+
+**Manual Testing Checklist:**
+- List/task CRUD operations with optimistic updates
+- Status toggling with section movement
+- Inline editing with validation and error handling
+- Drag-and-drop sorting with gap indexing
+- Network offline/online state transitions
+- Language switching and localized content
+- Error boundary triggering and recovery
+- Mobile touch interactions and responsive design
