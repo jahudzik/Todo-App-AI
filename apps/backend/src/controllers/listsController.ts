@@ -3,6 +3,8 @@ import { Prisma } from '@db';
 import { db } from '../utils/database';
 import { logger } from '../utils/logger';
 import { createError } from '../middleware/errorHandler';
+import { getNextListOrderIndex } from '../utils/gapIndexing';
+import { validateListName, validateListId } from '../utils/validation';
 
 /**
  * Get all todo lists for the demo user with nested items
@@ -29,7 +31,7 @@ export async function getAllLists(req: Request, res: Response): Promise<void> {
         },
       },
       orderBy: {
-        orderIndex: 'asc', // Lists ordered by their orderIndex
+        orderIndex: 'desc', // Lists ordered by their orderIndex (highest first)
       },
     });
 
@@ -90,6 +92,259 @@ export async function getAllLists(req: Request, res: Response): Promise<void> {
       }
     }
     
+    // Re-throw other errors to be handled by global error handler
+    throw error;
+  }
+}
+
+/**
+ * Create a new todo list with default name "New List"
+ * Uses gap indexing to determine the highest orderIndex
+ */
+export async function createList(req: Request, res: Response): Promise<void> {
+  try {
+    // Use demo user for MVP (authentication not implemented)
+    const userId = 'demo';
+    const defaultName = 'New List';
+
+    logger.info(`Creating new list for user: ${userId}`);
+
+    // Get the next available orderIndex using gap indexing
+    const orderIndex = await getNextListOrderIndex(userId);
+
+    // Create the new list
+    const newList = await db.todoList.create({
+      data: {
+        name: defaultName,
+        userId,
+        orderIndex,
+      },
+      include: {
+        items: {
+          orderBy: [
+            { isCompleted: 'asc' },
+            { positionInList: 'asc' },
+          ],
+        },
+      },
+    });
+
+    logger.info(`Created new list with ID: ${newList.id}, orderIndex: ${orderIndex}`);
+
+    // Format response to match expected frontend format
+    const formattedList = {
+      id: newList.id,
+      name: newList.name,
+      userId: newList.userId,
+      orderIndex: newList.orderIndex,
+      createdAt: newList.createdAt,
+      updatedAt: newList.updatedAt,
+      items: newList.items.map((item) => ({
+        id: item.id,
+        title: item.title,
+        isCompleted: item.isCompleted,
+        positionInList: item.positionInList,
+        listId: item.listId,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
+      })),
+    };
+
+    res.status(201).json({
+      success: true,
+      data: formattedList,
+    });
+
+  } catch (error) {
+    logger.error('Error creating list:', error);
+
+    // Handle specific database errors
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      // P2002: Unique constraint violation (userId, orderIndex combination)
+      if (error.code === 'P2002') {
+        throw createError(
+          'Failed to create list due to ordering conflict. Please try again.',
+          409,
+          'CONFLICT_ERROR'
+        );
+      }
+    }
+
+    // Re-throw other errors to be handled by global error handler
+    throw error;
+  }
+}
+
+/**
+ * Update a todo list's name
+ * Validates input and returns 400 for empty names
+ */
+export async function updateList(req: Request, res: Response): Promise<void> {
+  try {
+    const { id } = req.params;
+    const { name } = req.body;
+
+    // Validate list ID
+    validateListId(id);
+
+    // Validate and sanitize the list name
+    const sanitizedName = validateListName(name);
+
+    logger.info(`Updating list ${id} with name: ${sanitizedName}`);
+
+    // Check if list exists and belongs to demo user
+    const existingList = await db.todoList.findFirst({
+      where: {
+        id,
+        userId: 'demo',
+      },
+    });
+
+    if (!existingList) {
+      throw createError(
+        'List not found',
+        404,
+        'NOT_FOUND'
+      );
+    }
+
+    // Update the list
+    const updatedList = await db.todoList.update({
+      where: { id },
+      data: { name: sanitizedName },
+      include: {
+        items: {
+          orderBy: [
+            { isCompleted: 'asc' },
+            { positionInList: 'asc' },
+          ],
+        },
+      },
+    });
+
+    logger.info(`Successfully updated list ${id}`);
+
+    // Format response to match expected frontend format
+    const formattedList = {
+      id: updatedList.id,
+      name: updatedList.name,
+      userId: updatedList.userId,
+      orderIndex: updatedList.orderIndex,
+      createdAt: updatedList.createdAt,
+      updatedAt: updatedList.updatedAt,
+      items: updatedList.items.map((item) => ({
+        id: item.id,
+        title: item.title,
+        isCompleted: item.isCompleted,
+        positionInList: item.positionInList,
+        listId: item.listId,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
+      })),
+    };
+
+    res.status(200).json({
+      success: true,
+      data: formattedList,
+    });
+
+  } catch (error: unknown) {
+    logger.error('Error updating list:', error);
+
+    // Re-throw validation and not found errors
+    if (error && typeof error === 'object' && 'statusCode' in error) {
+      throw error;
+    }
+
+    // Handle specific database errors
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      // P2025: Record not found
+      if (error.code === 'P2025') {
+        throw createError(
+          'List not found',
+          404,
+          'NOT_FOUND'
+        );
+      }
+    }
+
+    // Re-throw other errors to be handled by global error handler
+    throw error;
+  }
+}
+
+/**
+ * Delete a todo list and all its items permanently
+ * Uses Prisma cascade delete to remove all associated items
+ */
+export async function deleteList(req: Request, res: Response): Promise<void> {
+  try {
+    const { id } = req.params;
+
+    // Validate list ID
+    validateListId(id);
+
+    logger.info(`Deleting list ${id} and all its items`);
+
+    // Check if list exists and belongs to demo user
+    const existingList = await db.todoList.findFirst({
+      where: {
+        id,
+        userId: 'demo',
+      },
+      include: {
+        _count: {
+          select: { items: true },
+        },
+      },
+    });
+
+    if (!existingList) {
+      throw createError(
+        'List not found',
+        404,
+        'NOT_FOUND'
+      );
+    }
+
+    const itemCount = existingList._count.items;
+
+    // Delete the list (this will cascade to delete all items due to onDelete: Cascade in schema)
+    await db.todoList.delete({
+      where: { id },
+    });
+
+    logger.info(`Successfully deleted list ${id} and ${itemCount} items`);
+
+    res.status(200).json({
+      success: true,
+      message: `List deleted permanently along with ${itemCount} items`,
+      data: {
+        deletedListId: id,
+        deletedItemsCount: itemCount,
+      },
+    });
+
+  } catch (error: unknown) {
+    logger.error('Error deleting list:', error);
+
+    // Re-throw validation and not found errors
+    if (error && typeof error === 'object' && 'statusCode' in error) {
+      throw error;
+    }
+
+    // Handle specific database errors
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      // P2025: Record not found
+      if (error.code === 'P2025') {
+        throw createError(
+          'List not found',
+          404,
+          'NOT_FOUND'
+        );
+      }
+    }
+
     // Re-throw other errors to be handled by global error handler
     throw error;
   }

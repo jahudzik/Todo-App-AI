@@ -20,27 +20,62 @@ Accept: application/json
 GET http://localhost:3001/api/lists
 Origin: http://localhost:3000
 
-### Future endpoints (uncomment when implemented)
+### Create a new todo list (default name "New List")
+POST http://localhost:3001/api/lists
+Content-Type: application/json
 
-# ### Create a new todo list
-# POST http://localhost:3001/api/lists
-# Content-Type: application/json
-# 
-# {
-#   "name": "Shopping List",
-#   "orderIndex": 300
-# }
+### Create another new todo list to test ordering
+POST http://localhost:3001/api/lists
+Content-Type: application/json
 
-# ### Update a todo list
-# PUT http://localhost:3001/api/lists/LIST_ID
-# Content-Type: application/json
-# 
-# {
-#   "name": "Updated List Name"
-# }
+### Update a todo list name - REPLACE WITH ACTUAL LIST ID
+PATCH http://localhost:3001/api/lists/REPLACE_WITH_LIST_ID
+Content-Type: application/json
 
-# ### Delete a todo list
-# DELETE http://localhost:3001/api/lists/LIST_ID
+{
+  "name": "Updated Shopping List"
+}
+
+### Update list with validation error - empty name
+PATCH http://localhost:3001/api/lists/REPLACE_WITH_LIST_ID
+Content-Type: application/json
+
+{
+  "name": ""
+}
+
+### Update list with validation error - name too long
+PATCH http://localhost:3001/api/lists/REPLACE_WITH_LIST_ID
+Content-Type: application/json
+
+{
+  "name": "This is a very long list name that exceeds the 100 character limit and should cause a validation error to be returned by the API endpoint"
+}
+
+### Update list with HTML sanitization test
+PATCH http://localhost:3001/api/lists/REPLACE_WITH_LIST_ID
+Content-Type: application/json
+
+{
+  "name": "<script>alert('test')</script>Safe List Name"
+}
+
+### Update non-existent list (404 error)
+PATCH http://localhost:3001/api/lists/non-existent-id
+Content-Type: application/json
+
+{
+  "name": "This should fail"
+}
+
+### Delete a todo list - REPLACE WITH ACTUAL LIST ID
+DELETE http://localhost:3001/api/lists/REPLACE_WITH_LIST_ID
+
+### Delete non-existent list (404 error)
+DELETE http://localhost:3001/api/lists/non-existent-id
+
+### Delete with invalid ID format (400 error)
+DELETE http://localhost:3001/api/lists/invalid-id-format
 
 # ### Create a new todo item
 # POST http://localhost:3001/api/lists/LIST_ID/items
