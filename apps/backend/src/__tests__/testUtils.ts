@@ -105,6 +105,9 @@ export class MockPrismaClientKnownRequestError extends Error {
     this.name = 'PrismaClientKnownRequestError';
     this.code = code;
     this.clientVersion = '5.0.0';
+    
+    // Ensure instanceof checks work properly
+    Object.setPrototypeOf(this, MockPrismaClientKnownRequestError.prototype);
   }
 }
 

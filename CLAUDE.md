@@ -115,6 +115,28 @@ pnpm db:studio      # Open Prisma Studio
   gh pr create --base develop --title "..." --body "..."
   ```
 
+## Pre-PR Quality Checks
+
+**MANDATORY: Before creating any PR, ALL of the following checks MUST pass:**
+
+1. **Unit Tests**: `pnpm test` - All tests must pass
+2. **Type Checking**: `pnpm type-check` - No TypeScript errors
+3. **Linting**: `pnpm lint` - Clean ESLint results
+4. **Build**: `pnpm build` - Successful production build
+
+**If ANY check fails:**
+- Fix the issues immediately
+- Re-run all checks to ensure they pass
+- Only then create the PR
+
+**Auto-fix workflow:**
+```bash
+# Run all checks in sequence
+pnpm test && pnpm type-check && pnpm lint && pnpm build
+
+# If any fail, fix and retry until all pass
+```
+
 ## Environment Variables
 
 **Frontend (.env.local):**
