@@ -18,5 +18,15 @@
   },
   "loading": "Ładowanie...",
   "error": "Coś poszło nie tak",
-  "retry": "Spróbuj ponownie"
+  "retry": "Spróbuj ponownie",
+  "offline": {
+    "banner": {
+      "title": "Utracono połączenie - Jesteś obecnie offline",
+      "description": "Niektóre funkcje mogą nie działać do czasu przywrócenia połączenia"
+    },
+    "overlay": {
+      "message": "Sprawdź swoje połączenie"
+    },
+    "tooltip": "Ta funkcja nie jest dostępna offline"
+  }
 }

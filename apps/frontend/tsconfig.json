@@ -17,6 +17,7 @@
     "incremental": true,
     "composite": true,
     "outDir": "dist",
+    "types": ["jest", "@testing-library/jest-dom"],
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],

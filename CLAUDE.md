@@ -115,6 +115,47 @@ pnpm db:studio      # Open Prisma Studio
   gh pr create --base develop --title "..." --body "..."
   ```
 
+### Pull Request Description Format
+
+**MANDATORY: Use comprehensive summary format instead of listing individual commits**
+
+**Required PR Description Structure:**
+```markdown
+## Summary
+[Brief overview of what this PR accomplishes]
+
+### 🚀 Core Features Implemented
+[Key functionality and technical implementations]
+
+### 🧪 Testing Infrastructure / 🔧 Technical Changes / 📚 Documentation Updates
+[Testing coverage, technical improvements, or documentation changes]
+
+### ✅ Quality Verification
+[Confirmation that all quality checks pass]
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+```
+
+**PR Description Guidelines:**
+- **Focus on WHAT was accomplished**, not individual commit details
+- **Group related changes** under logical sections with emoji headers
+- **Highlight key technical implementations** and architecture decisions
+- **Document testing coverage** and quality assurance measures
+- **Include quality verification checklist** to confirm all checks pass
+- **Use clear, descriptive language** that explains the value and impact
+- **Avoid mentioning specific commit messages** or individual commit details
+
+**Example Sections to Include:**
+- 🚀 Core Features Implemented
+- 🧪 Testing Infrastructure  
+- 🔧 Technical Changes
+- 📚 Documentation Updates
+- 🌐 API Enhancements
+- 🎨 UI/UX Improvements
+- ✅ Quality Verification
+
+This approach provides a clear overview of the PR's value and impact without getting lost in commit-level details.
+
 ## Pre-PR Quality Checks
 
 **MANDATORY: Before creating any PR, ALL of the following checks MUST pass:**
@@ -136,6 +177,42 @@ pnpm test && pnpm type-check && pnpm lint && pnpm build
 
 # If any fail, fix and retry until all pass
 ```
+
+## Documentation Review Process
+
+**MANDATORY: For EVERY PR, both documentation files MUST be reviewed and updated:**
+
+### Required Documentation Updates:
+
+1. **`docs/todo_app_specification.md` Review:**
+   - Check if new features/changes require specification updates
+   - Add new technical architecture sections for major implementations
+   - Update testing requirements and coverage standards
+   - Document new error handling patterns or API changes
+   - Verify environment variables and configuration sections are current
+
+2. **`docs/todo_app_prompts.md` Review:**
+   - Update implementation status tracking (✅ COMPLETED, 🟡 IN PROGRESS, ⏳ PENDING)
+   - Mark completed prompts with ✅ status
+   - Update the "Overall Implementation Status" section with current counts
+   - Add new prompts if functionality extends beyond existing prompts
+   - Maintain the current format: status tracking, detailed prompt descriptions, and organized iterations
+
+### Documentation Update Process:
+
+1. **Analyze Changes:** Review all files changed in the PR
+2. **Identify Gaps:** Compare implemented features against current documentation
+3. **Update Specification:** Add missing technical details, architecture sections, and requirements
+4. **Update Prompts Status:** Mark completed prompts and update progress tracking
+5. **Commit Documentation:** Include documentation updates in the same PR
+
+**Documentation Update Examples:**
+- New data fetching layer → Add "Data Fetching Architecture" section to specification
+- Completed API endpoints → Mark corresponding prompts as ✅ COMPLETED
+- New testing requirements → Update "Testing Requirements" section with coverage standards
+- New environment variables → Update environment configuration sections
+
+**This ensures documentation stays current and provides accurate guidance for future development.**
 
 ## Environment Variables
 
