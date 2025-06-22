@@ -131,3 +131,26 @@ export function validateListId(id: string): void {
     );
   }
 }
+
+/**
+ * Validates item ID parameter
+ * @param id - The item ID to validate
+ * @throws ValidationError if ID is invalid
+ */
+export function validateItemId(id: string): void {
+  if (!id || typeof id !== 'string') {
+    throw createError(
+      'Item ID is required',
+      400,
+      'VALIDATION_ERROR'
+    );
+  }
+
+  if (!isValidCuid(id)) {
+    throw createError(
+      'Invalid item ID format',
+      400,
+      'VALIDATION_ERROR'
+    );
+  }
+}
