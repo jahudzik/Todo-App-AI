@@ -25,6 +25,13 @@ const getApiBaseUrl = (): string => {
   const baseUrl = process.env.NEXT_PUBLIC_API_URL;
   
   if (!baseUrl) {
+    // During build time, provide a default value to prevent build failures
+    // At runtime, this will be properly set from the environment
+    if (typeof window === 'undefined') {
+      // Server-side (build time) - use default
+      return 'http://localhost:3001';
+    }
+    
     const errorMessage = 'NEXT_PUBLIC_API_URL environment variable is not set. Please check your .env.local file.';
     console.error(errorMessage);
     throw new Error(errorMessage);

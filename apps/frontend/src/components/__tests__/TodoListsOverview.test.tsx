@@ -22,9 +22,11 @@ jest.mock('../../hooks/useOnlineStatus');
 jest.mock('next-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, options?: any) => {
-      // Simple mock translation function
+      // Simple mock translation function with pluralization support
       const translations: Record<string, string> = {
         'lists.title': 'Todo Lists',
+        'lists.count': '{{count}} list',
+        'lists.count_plural': '{{count}} lists',
         'lists.emptyState.title': 'Welcome to your Todo Lists!',
         'lists.emptyState.description': 'Get organized by creating your first todo list.',
         'lists.emptyState.createButton': 'Create Your First List',
@@ -33,6 +35,13 @@ jest.mock('next-i18next', () => ({
         'retry': 'Try again',
         'loading': 'Loading...',
       };
+      
+      // Handle pluralization
+      if (key === 'lists.count' && options?.count) {
+        const pluralKey = options.count === 1 ? 'lists.count' : 'lists.count_plural';
+        return translations[pluralKey]?.replace(/\{\{(\w+)\}\}/g, (_, k) => options[k]);
+      }
+      
       return options ? translations[key]?.replace(/\{\{(\w+)\}\}/g, (_, k) => options[k]) : translations[key] || key;
     },
     i18n: { language: 'en' }

@@ -31,6 +31,8 @@
   },
   "lists": {
     "title": "Todo Lists",
+    "count": "{{count}} list",
+    "count_plural": "{{count}} lists",
     "emptyState": {
       "title": "Welcome to your Todo Lists!",
       "description": "Get organized by creating your first todo list. Whether it's for work, personal tasks, or projects, start building your productivity system today.",

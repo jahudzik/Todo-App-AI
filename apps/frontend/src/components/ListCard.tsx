@@ -178,6 +178,35 @@ function ListCard({ list, disabled }: ListCardProps) {
   );
 }
 
+/**
+ * Efficient comparison function for items array
+ * Compares array length and item references without deep stringification
+ */
+const areItemsEqual = (prevItems: any[] = [], nextItems: any[] = []): boolean => {
+  // Quick length check
+  if (prevItems.length !== nextItems.length) {
+    return false;
+  }
+  
+  // Compare each item by reference and key properties
+  for (let i = 0; i < prevItems.length; i++) {
+    const prevItem = prevItems[i];
+    const nextItem = nextItems[i];
+    
+    // Short-circuit on first difference
+    if (
+      prevItem?.id !== nextItem?.id ||
+      prevItem?.title !== nextItem?.title ||
+      prevItem?.isCompleted !== nextItem?.isCompleted ||
+      prevItem?.positionInList !== nextItem?.positionInList
+    ) {
+      return false;
+    }
+  }
+  
+  return true;
+};
+
 // Memoize the component to prevent unnecessary re-renders
 // Only re-render when list data or disabled state changes
 export default memo(ListCard, (prevProps, nextProps) => {
@@ -189,7 +218,7 @@ export default memo(ListCard, (prevProps, nextProps) => {
     prevProps.list.updatedAt === nextProps.list.updatedAt &&
     prevProps.list.orderIndex === nextProps.list.orderIndex &&
     prevProps.disabled === nextProps.disabled &&
-    // Deep compare items array for changes
-    JSON.stringify(prevProps.list.items || []) === JSON.stringify(nextProps.list.items || [])
+    // Efficiently compare items array
+    areItemsEqual(prevProps.list.items, nextProps.list.items)
   );
 });

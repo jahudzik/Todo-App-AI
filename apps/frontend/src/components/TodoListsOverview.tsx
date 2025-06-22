@@ -10,6 +10,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'next-i18next';
 import { useListsQuery, useCreateListMutation } from '../hooks/useLists';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
+import { calculateNextOrderIndex } from '../utils/orderIndex';
 import ListCard from './ListCard';
 import EmptyListsState from './EmptyListsState';
 import CreateListButton from './CreateListButton';
@@ -42,9 +43,8 @@ export default function TodoListsOverview() {
 
     setIsCreating(true);
     try {
-      // Calculate order index for new list (higher than current highest)
-      const maxOrderIndex = Math.max(...lists.map(list => list.orderIndex), 0);
-      const newOrderIndex = maxOrderIndex + 1000;
+      // Calculate order index for new list using utility function
+      const newOrderIndex = calculateNextOrderIndex(lists);
 
       await createListMutation.mutateAsync({
         name: name.trim(),
@@ -129,7 +129,7 @@ export default function TodoListsOverview() {
           </h1>
           {lists.length > 0 && (
             <p className="text-gray-600 mt-1">
-              {lists.length} {lists.length === 1 ? 'list' : 'lists'}
+              {t('lists.count', { count: lists.length })}
             </p>
           )}
         </div>

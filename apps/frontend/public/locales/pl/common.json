@@ -31,6 +31,8 @@
   },
   "lists": {
     "title": "Listy Zadań",
+    "count": "{{count}} lista",
+    "count_plural": "{{count}} list",
     "emptyState": {
       "title": "Witaj w swoich Listach Zadań!",
       "description": "Zorganizuj się tworząc swoją pierwszą listę zadań. Niezależnie od tego, czy to do pracy, zadań osobistych czy projektów, zacznij budować swój system produktywności już dziś.",
