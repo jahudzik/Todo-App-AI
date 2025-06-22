@@ -18,5 +18,15 @@
   },
   "loading": "Loading...",
   "error": "Something went wrong",
-  "retry": "Try again"
+  "retry": "Try again",
+  "offline": {
+    "banner": {
+      "title": "Connection lost - You're currently offline",
+      "description": "Some features may not work until your connection is restored"
+    },
+    "overlay": {
+      "message": "Please check your connection"
+    },
+    "tooltip": "This feature is not available offline"
+  }
 }
