@@ -57,7 +57,7 @@ export async function calculateListOrderIndex(
     return await getNextListOrderIndex(userId);
   }
 
-  // If inserting at the beginning (before the first item)
+  // If inserting at the beginning (afterIndex equals lists.length - 1, which is the last item in descending order with lowest orderIndex)
   if (afterIndex === lists.length - 1) {
     return lists[afterIndex].orderIndex - 500;
   }
@@ -90,14 +90,16 @@ export async function compactListOrderIndexes(userId: string): Promise<void> {
     orderBy: { orderIndex: 'desc' },
   });
 
-  // Update each list with new orderIndex values using standard gaps
-  for (let i = 0; i < lists.length; i++) {
-    const newOrderIndex = (lists.length - i) * STANDARD_GAP;
-    await db.todoList.update({
-      where: { id: lists[i].id },
-      data: { orderIndex: newOrderIndex },
-    });
-  }
+  // Update each list with new orderIndex values using standard gaps in a transaction
+  await db.$transaction(async (tx) => {
+    for (let i = 0; i < lists.length; i++) {
+      const newOrderIndex = (lists.length - i) * STANDARD_GAP;
+      await tx.todoList.update({
+        where: { id: lists[i].id },
+        data: { orderIndex: newOrderIndex },
+      });
+    }
+  });
 
   logger.info(`Compacted ${lists.length} lists for user ${userId}`);
 }
@@ -179,14 +181,16 @@ export async function compactItemPositions(listId: string): Promise<void> {
     orderBy: { positionInList: 'desc' },
   });
 
-  // Update each item with new positionInList values using standard gaps
-  for (let i = 0; i < items.length; i++) {
-    const newPosition = (items.length - i) * STANDARD_GAP;
-    await db.todoItem.update({
-      where: { id: items[i].id },
-      data: { positionInList: newPosition },
-    });
-  }
+  // Update each item with new positionInList values using standard gaps in a transaction
+  await db.$transaction(async (tx) => {
+    for (let i = 0; i < items.length; i++) {
+      const newPosition = (items.length - i) * STANDARD_GAP;
+      await tx.todoItem.update({
+        where: { id: items[i].id },
+        data: { positionInList: newPosition },
+      });
+    }
+  });
 
   logger.info(`Compacted ${items.length} items for list ${listId}`);
 }
