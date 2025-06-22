@@ -28,5 +28,39 @@
       "message": "Please check your connection"
     },
     "tooltip": "This feature is not available offline"
+  },
+  "lists": {
+    "title": "Todo Lists",
+    "count": "{{count}} list",
+    "count_plural": "{{count}} lists",
+    "emptyState": {
+      "title": "Welcome to your Todo Lists!",
+      "description": "Get organized by creating your first todo list. Whether it's for work, personal tasks, or projects, start building your productivity system today.",
+      "createButton": "Create Your First List",
+      "tips": {
+        "title": "Pro Tips:",
+        "organize": "Organize tasks by project or category",
+        "dragDrop": "Drag and drop to reorder lists",
+        "progress": "Track progress with completion stats",
+        "offline": "Works offline with auto-sync"
+      }
+    },
+    "create": {
+      "button": "New List",
+      "placeholder": "Enter list name...",
+      "submit": "Create List",
+      "cancel": "Cancel",
+      "creating": "Creating..."
+    },
+    "stats": {
+      "completed": "{{completed}} of {{total}} completed",
+      "items": "{{count}} item",
+      "items_plural": "{{count}} items",
+      "pending": "{{count}} pending",
+      "allCompleted": "All items completed!",
+      "noItems": "No items yet",
+      "moreItems": "+{{count}} more item",
+      "moreItems_plural": "+{{count}} more items"
+    }
   }
 }

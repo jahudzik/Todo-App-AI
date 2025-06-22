@@ -28,5 +28,39 @@
       "message": "Sprawdź swoje połączenie"
     },
     "tooltip": "Ta funkcja nie jest dostępna offline"
+  },
+  "lists": {
+    "title": "Listy Zadań",
+    "count": "{{count}} lista",
+    "count_plural": "{{count}} list",
+    "emptyState": {
+      "title": "Witaj w swoich Listach Zadań!",
+      "description": "Zorganizuj się tworząc swoją pierwszą listę zadań. Niezależnie od tego, czy to do pracy, zadań osobistych czy projektów, zacznij budować swój system produktywności już dziś.",
+      "createButton": "Utwórz Pierwszą Listę",
+      "tips": {
+        "title": "Wskazówki:",
+        "organize": "Organizuj zadania według projektów lub kategorii",
+        "dragDrop": "Przeciągnij i upuść, aby zmienić kolejność list",
+        "progress": "Śledź postęp ze statystykami ukończenia",
+        "offline": "Działa offline z automatyczną synchronizacją"
+      }
+    },
+    "create": {
+      "button": "Nowa Lista",
+      "placeholder": "Wprowadź nazwę listy...",
+      "submit": "Utwórz Listę",
+      "cancel": "Anuluj",
+      "creating": "Tworzenie..."
+    },
+    "stats": {
+      "completed": "{{completed}} z {{total}} ukończono",
+      "items": "{{count}} element",
+      "items_plural": "{{count}} elementów",
+      "pending": "{{count}} oczekujących",
+      "allCompleted": "Wszystkie elementy ukończone!",
+      "noItems": "Brak elementów",
+      "moreItems": "+{{count}} więcej element",
+      "moreItems_plural": "+{{count}} więcej elementów"
+    }
   }
 }
