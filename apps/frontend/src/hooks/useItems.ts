@@ -21,6 +21,21 @@ import {
 import { itemsApi, showApiError } from '../utils/api';
 import { LISTS_QUERY_KEYS } from './useLists';
 
+/**
+ * Utility function to sort todo items consistently across the application
+ * Sorts items by completion status first (incomplete first), then by position within list
+ * @param items - Array of TodoItem objects to sort
+ * @returns Sorted array of TodoItem objects
+ */
+const sortTodoItems = (items: TodoItem[]): TodoItem[] => {
+  return items.sort((a, b) => {
+    if (a.isCompleted !== b.isCompleted) {
+      return a.isCompleted ? 1 : -1; // Incomplete items first
+    }
+    return a.positionInList - b.positionInList;
+  });
+};
+
 // Query keys for consistent cache management
 export const ITEMS_QUERY_KEYS = {
   all: ['items'] as const,
@@ -45,12 +60,7 @@ export const useItemsQuery = (
     staleTime: 3 * 60 * 1000, // 3 minutes (shorter than lists for more frequent updates)
     select: (data) => {
       // Sort items: incomplete first, then by position
-      return data.sort((a, b) => {
-        if (a.isCompleted !== b.isCompleted) {
-          return a.isCompleted ? 1 : -1; // Incomplete items first
-        }
-        return a.positionInList - b.positionInList;
-      });
+      return sortTodoItems(data);
     },
   });
 };
@@ -91,13 +101,7 @@ export const useCreateItemMutation = (): UseMutationResult<
           updatedAt: new Date().toISOString(),
         };
 
-        const updatedItems = [...previousItems, optimisticItem]
-          .sort((a, b) => {
-            if (a.isCompleted !== b.isCompleted) {
-              return a.isCompleted ? 1 : -1;
-            }
-            return a.positionInList - b.positionInList;
-          });
+        const updatedItems = sortTodoItems([...previousItems, optimisticItem]);
 
         queryClient.setQueryData(ITEMS_QUERY_KEYS.byList(listId), updatedItems);
       }
@@ -114,13 +118,7 @@ export const useCreateItemMutation = (): UseMutationResult<
           
           // Replace the optimistic item with the real one
           const withoutOptimistic = old.filter(item => !item.id.startsWith('temp-'));
-          return [...withoutOptimistic, newItem]
-            .sort((a, b) => {
-              if (a.isCompleted !== b.isCompleted) {
-                return a.isCompleted ? 1 : -1;
-              }
-              return a.positionInList - b.positionInList;
-            });
+          return sortTodoItems([...withoutOptimistic, newItem]);
         }
       );
 
@@ -198,13 +196,7 @@ export const useUpdateItemMutation = (): UseMutationResult<
               updatedAt: new Date().toISOString() 
             };
             
-            const updatedTargetItems = [...(previousTargetItems || []), movedItem]
-              .sort((a, b) => {
-                if (a.isCompleted !== b.isCompleted) {
-                  return a.isCompleted ? 1 : -1;
-                }
-                return a.positionInList - b.positionInList;
-              });
+            const updatedTargetItems = sortTodoItems([...(previousTargetItems || []), movedItem]);
             
             queryClient.setQueryData(ITEMS_QUERY_KEYS.byList(targetListId), updatedTargetItems);
           }
@@ -212,16 +204,13 @@ export const useUpdateItemMutation = (): UseMutationResult<
       } else {
         // Updating item within the same list
         if (previousItems) {
-          const updatedItems = previousItems.map(item => 
-            item.id === id 
-              ? { ...item, ...data, updatedAt: new Date().toISOString() }
-              : item
-          ).sort((a, b) => {
-            if (a.isCompleted !== b.isCompleted) {
-              return a.isCompleted ? 1 : -1;
-            }
-            return a.positionInList - b.positionInList;
-          });
+          const updatedItems = sortTodoItems(
+            previousItems.map(item => 
+              item.id === id 
+                ? { ...item, ...data, updatedAt: new Date().toISOString() }
+                : item
+            )
+          );
           
           queryClient.setQueryData(ITEMS_QUERY_KEYS.byList(currentListId), updatedItems);
         }
@@ -245,13 +234,7 @@ export const useUpdateItemMutation = (): UseMutationResult<
           ITEMS_QUERY_KEYS.byList(targetListId),
           (old) => {
             const withoutUpdated = (old || []).filter(item => item.id !== updatedItem.id);
-            return [...withoutUpdated, updatedItem]
-              .sort((a, b) => {
-                if (a.isCompleted !== b.isCompleted) {
-                  return a.isCompleted ? 1 : -1;
-                }
-                return a.positionInList - b.positionInList;
-              });
+            return sortTodoItems([...withoutUpdated, updatedItem]);
           }
         );
       } else {
@@ -260,13 +243,9 @@ export const useUpdateItemMutation = (): UseMutationResult<
           ITEMS_QUERY_KEYS.byList(targetListId),
           (old) => {
             if (!old) return [updatedItem];
-            return old.map(item => item.id === updatedItem.id ? updatedItem : item)
-              .sort((a, b) => {
-                if (a.isCompleted !== b.isCompleted) {
-                  return a.isCompleted ? 1 : -1;
-                }
-                return a.positionInList - b.positionInList;
-              });
+            return sortTodoItems(
+              old.map(item => item.id === updatedItem.id ? updatedItem : item)
+            );
           }
         );
       }
@@ -405,14 +384,11 @@ export const useReorderItemsMutation = (): UseMutationResult<
                   updatedAt: new Date().toISOString() 
                 }
               : item;
-          }).sort((a, b) => {
-            if (a.isCompleted !== b.isCompleted) {
-              return a.isCompleted ? 1 : -1;
-            }
-            return a.positionInList - b.positionInList;
           });
 
-          queryClient.setQueryData(ITEMS_QUERY_KEYS.byList(listId), updatedItems);
+          const sortedItems = sortTodoItems(updatedItems);
+
+          queryClient.setQueryData(ITEMS_QUERY_KEYS.byList(listId), sortedItems);
         }
       }
 
@@ -442,13 +418,8 @@ export const useReorderItemsMutation = (): UseMutationResult<
             const updatedIds = new Set(listItems.map(item => item.id));
             const nonUpdatedItems = old.filter(item => !updatedIds.has(item.id));
             
-            return [...nonUpdatedItems, ...listItems]
-              .sort((a, b) => {
-                if (a.isCompleted !== b.isCompleted) {
-                  return a.isCompleted ? 1 : -1;
-                }
-                return a.positionInList - b.positionInList;
-              });
+            const combinedItems = [...nonUpdatedItems, ...listItems];
+            return sortTodoItems(combinedItems);
           }
         );
       }
