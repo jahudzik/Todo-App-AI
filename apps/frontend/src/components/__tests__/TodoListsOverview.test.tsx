@@ -31,14 +31,18 @@ jest.mock('next-i18next', () => ({
         'lists.emptyState.description': 'Get organized by creating your first todo list.',
         'lists.emptyState.createButton': 'Create Your First List',
         'lists.create.button': 'New List',
+        'lists.stats.moreItems': '+{{count}} more item',
+        'lists.stats.moreItems_plural': '+{{count}} more items',
         'error': 'Something went wrong',
         'retry': 'Try again',
         'loading': 'Loading...',
       };
       
-      // Handle pluralization
-      if (key === 'lists.count' && options?.count) {
-        const pluralKey = options.count === 1 ? 'lists.count' : 'lists.count_plural';
+      // Handle pluralization for multiple keys
+      const pluralizationKeys = ['lists.count', 'lists.stats.moreItems'];
+      if (pluralizationKeys.some(k => key.startsWith(k)) && options?.count) {
+        const basePluralKey = key.endsWith('_plural') ? key : key;
+        const pluralKey = options.count === 1 ? basePluralKey : `${basePluralKey}_plural`;
         return translations[pluralKey]?.replace(/\{\{(\w+)\}\}/g, (_, k) => options[k]);
       }
       

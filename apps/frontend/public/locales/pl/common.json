@@ -58,7 +58,9 @@
       "items_plural": "{{count}} elementów",
       "pending": "{{count}} oczekujących",
       "allCompleted": "Wszystkie elementy ukończone!",
-      "noItems": "Brak elementów"
+      "noItems": "Brak elementów",
+      "moreItems": "+{{count}} więcej element",
+      "moreItems_plural": "+{{count}} więcej elementów"
     }
   }
 }

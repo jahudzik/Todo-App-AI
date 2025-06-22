@@ -145,7 +145,7 @@ function ListCard({ list, disabled }: ListCardProps) {
             
             {itemStats.pending > previewItems.length && (
               <div className="text-sm text-gray-500">
-                +{itemStats.pending - previewItems.length} more item{itemStats.pending - previewItems.length !== 1 ? 's' : ''}
+                {t('lists.stats.moreItems', { count: itemStats.pending - previewItems.length })}
               </div>
             )}
             
