@@ -115,6 +115,47 @@ pnpm db:studio      # Open Prisma Studio
   gh pr create --base develop --title "..." --body "..."
   ```
 
+### Pull Request Description Format
+
+**MANDATORY: Use comprehensive summary format instead of listing individual commits**
+
+**Required PR Description Structure:**
+```markdown
+## Summary
+[Brief overview of what this PR accomplishes]
+
+### 🚀 Core Features Implemented
+[Key functionality and technical implementations]
+
+### 🧪 Testing Infrastructure / 🔧 Technical Changes / 📚 Documentation Updates
+[Testing coverage, technical improvements, or documentation changes]
+
+### ✅ Quality Verification
+[Confirmation that all quality checks pass]
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+```
+
+**PR Description Guidelines:**
+- **Focus on WHAT was accomplished**, not individual commit details
+- **Group related changes** under logical sections with emoji headers
+- **Highlight key technical implementations** and architecture decisions
+- **Document testing coverage** and quality assurance measures
+- **Include quality verification checklist** to confirm all checks pass
+- **Use clear, descriptive language** that explains the value and impact
+- **Avoid mentioning specific commit messages** or individual commit details
+
+**Example Sections to Include:**
+- 🚀 Core Features Implemented
+- 🧪 Testing Infrastructure  
+- 🔧 Technical Changes
+- 📚 Documentation Updates
+- 🌐 API Enhancements
+- 🎨 UI/UX Improvements
+- ✅ Quality Verification
+
+This approach provides a clear overview of the PR's value and impact without getting lost in commit-level details.
+
 ## Pre-PR Quality Checks
 
 **MANDATORY: Before creating any PR, ALL of the following checks MUST pass:**
