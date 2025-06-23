@@ -3,7 +3,7 @@
 # Todo App Development Server Stop Script
 # This script stops all development servers running on frontend and backend ports
 
-set -e
+set -euo pipefail
 
 # Colors for output
 RED='\033[0;31m'
@@ -36,7 +36,10 @@ print_error() {
 # Function to kill processes on a specific port
 kill_port() {
     local port=$1
-    local processes=$(lsof -ti:$port 2>/dev/null || true)
+    local processes
+    local remaining
+    
+    processes=$(lsof -ti:"$port" 2>/dev/null || true)
     
     if [ -n "$processes" ]; then
         print_status "Stopping processes on port $port..."
@@ -44,7 +47,7 @@ kill_port() {
         sleep 2
         
         # Verify processes are killed
-        local remaining=$(lsof -ti:$port 2>/dev/null || true)
+        remaining=$(lsof -ti:"$port" 2>/dev/null || true)
         if [ -n "$remaining" ]; then
             print_error "Failed to stop all processes on port $port"
             return 1
@@ -56,23 +59,30 @@ kill_port() {
     fi
 }
 
-# Function to find and kill all node processes related to this project
+# Function to find and kill processes related to this specific project
 kill_project_processes() {
-    print_status "Searching for related Node.js processes..."
+    print_status "Searching for project-specific Node.js processes..."
     
-    # Find processes containing todo-app, next, or express keywords
-    local project_processes=$(ps aux | grep -E "(todo-app|next|express|pnpm.*dev)" | grep -v grep | awk '{print $2}' || true)
+    # Get the current project directory name to make search more specific
+    local project_dir
+    project_dir=$(basename "$(pwd)")
+    
+    # Find processes specific to this project by searching for the project directory in the command line
+    local project_processes
+    project_processes=$(ps aux | grep -E "(${project_dir}|pnpm.*dev)" | grep -v grep | awk '{print $2}' || true)
     
     if [ -n "$project_processes" ]; then
-        print_warning "Found related processes, attempting to stop them..."
-        echo "$project_processes" | xargs kill -TERM 2>/dev/null || true
+        print_warning "Found project-specific processes, attempting to stop them..."
+        # Use xargs with -r to avoid running kill with empty input
+        echo "$project_processes" | xargs -r kill -TERM 2>/dev/null || true
         sleep 3
         
         # Force kill if still running
-        local remaining=$(ps aux | grep -E "(todo-app|next|express|pnpm.*dev)" | grep -v grep | awk '{print $2}' || true)
+        local remaining
+        remaining=$(ps aux | grep -E "(${project_dir}|pnpm.*dev)" | grep -v grep | awk '{print $2}' || true)
         if [ -n "$remaining" ]; then
             print_warning "Some processes still running, force killing..."
-            echo "$remaining" | xargs kill -9 2>/dev/null || true
+            echo "$remaining" | xargs -r kill -9 2>/dev/null || true
         fi
     fi
 }

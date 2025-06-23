@@ -3,7 +3,7 @@
 # Todo App Development Server Restart Script
 # This script stops all development servers and starts them fresh
 
-set -e
+set -euo pipefail
 
 # Colors for output
 RED='\033[0;31m'
@@ -17,11 +17,11 @@ FRONTEND_PORT=3000
 BACKEND_PORT=3001
 
 # Parse command line arguments to pass to start-dev.sh
-START_ARGS=""
+START_ARGS=()
 while [[ $# -gt 0 ]]; do
     case $1 in
         --logs|--verbose|-v)
-            START_ARGS="$START_ARGS --logs"
+            START_ARGS+=("--logs")
             shift
             ;;
         --help|-h)
@@ -73,7 +73,10 @@ check_directory() {
 # Function to kill processes on a specific port
 kill_port() {
     local port=$1
-    local processes=$(lsof -ti:$port 2>/dev/null || true)
+    local processes
+    local remaining
+    
+    processes=$(lsof -ti:"$port" 2>/dev/null || true)
     
     if [ -n "$processes" ]; then
         print_warning "Stopping processes on port $port"
@@ -81,7 +84,7 @@ kill_port() {
         sleep 2
         
         # Verify processes are killed
-        local remaining=$(lsof -ti:$port 2>/dev/null || true)
+        remaining=$(lsof -ti:"$port" 2>/dev/null || true)
         if [ -n "$remaining" ]; then
             print_error "Failed to stop all processes on port $port"
             return 1
@@ -113,9 +116,9 @@ main() {
     
     # Check if start-dev.sh exists and is executable
     if [ -x "./scripts/start-dev.sh" ]; then
-        if [ -n "$START_ARGS" ]; then
-            print_status "Passing arguments: $START_ARGS"
-            exec ./scripts/start-dev.sh $START_ARGS
+        if [ ${#START_ARGS[@]} -gt 0 ]; then
+            print_status "Passing arguments: ${START_ARGS[*]}"
+            exec ./scripts/start-dev.sh "${START_ARGS[@]}"
         else
             exec ./scripts/start-dev.sh
         fi

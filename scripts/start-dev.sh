@@ -3,7 +3,7 @@
 # Todo App Development Server Startup Script
 # This script kills any existing processes on frontend/backend ports and starts fresh development servers
 
-set -e
+set -euo pipefail
 
 # Colors for output
 RED='\033[0;31m'
@@ -82,7 +82,10 @@ print_error() {
 # Function to kill processes on a specific port
 kill_port() {
     local port=$1
-    local processes=$(lsof -ti:$port 2>/dev/null || true)
+    local processes
+    local remaining
+    
+    processes=$(lsof -ti:"$port" 2>/dev/null || true)
     
     if [ -n "$processes" ]; then
         print_warning "Killing existing processes on port $port"
@@ -90,7 +93,7 @@ kill_port() {
         sleep 2
         
         # Verify processes are killed
-        local remaining=$(lsof -ti:$port 2>/dev/null || true)
+        remaining=$(lsof -ti:"$port" 2>/dev/null || true)
         if [ -n "$remaining" ]; then
             print_error "Failed to kill all processes on port $port"
             return 1
